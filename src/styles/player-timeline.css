@@ -1,0 +1,80 @@
+/* Keep the native slider hit area; focus belongs to the thumb, not the full rail. */
+.player .timeline {
+  appearance: none;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.player .timeline:focus-visible,
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .player .timeline:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+.player .timeline::-webkit-slider-runnable-track {
+  height: 3px;
+  border-radius: 999px;
+  background: linear-gradient(to right,
+    #d3e5ff 0, #d3e5ff var(--timeline-progress),
+    #ffffff52 var(--timeline-progress), #ffffff52 100%);
+}
+
+.player .timeline::-webkit-slider-thumb {
+  appearance: none;
+  width: 12px;
+  height: 12px;
+  margin-top: -4.5px;
+  border: 1px solid #ffffffb3;
+  border-radius: 50%;
+  background: #d3e5ff;
+}
+
+.player .timeline:focus-visible::-webkit-slider-thumb,
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .player .timeline:focus::-webkit-slider-thumb {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+.player .timeline::-moz-range-track {
+  height: 3px;
+  border-radius: 999px;
+  background: #ffffff52;
+}
+
+.player .timeline::-moz-range-progress {
+  height: 3px;
+  border-radius: 999px;
+  background: #d3e5ff;
+}
+
+.player .timeline::-moz-range-thumb {
+  width: 10px;
+  height: 10px;
+  border: 1px solid #ffffffb3;
+  border-radius: 50%;
+  background: #d3e5ff;
+}
+
+.player .timeline:focus-visible::-moz-range-thumb,
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .player .timeline:focus::-moz-range-thumb {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+@media (forced-colors: active) {
+  .player .timeline {
+    --focus: Highlight;
+  }
+
+  .player .timeline::-webkit-slider-runnable-track {
+    background: GrayText;
+  }
+
+  .player .timeline::-webkit-slider-thumb {
+    border-color: Highlight;
+    background: Highlight;
+  }
+}

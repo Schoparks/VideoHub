@@ -1,0 +1,241 @@
+.player {
+  position: fixed;
+  inset: 0;
+  z-index: 20;
+  margin: 0;
+  background: #090d0c;
+  color: #fff;
+}
+
+.player video {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.player-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  background: linear-gradient(#070d0be0, transparent 25%, transparent 65%, #070d0bf5);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 300ms;
+}
+
+.controls-visible .player-overlay {
+  opacity: 1;
+}
+
+.player-overlay header {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 28px 35px;
+  pointer-events: auto;
+}
+
+.player-overlay header > div {
+  min-width: 0;
+  flex: 1;
+}
+
+.player-overlay h2 {
+  max-height: 2.8em;
+  overflow: hidden;
+  font-size: 20px;
+  font-weight: 500;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.player-overlay p {
+  margin-top: 8px;
+  color: #bccfc2;
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.player-overlay header p {
+  max-height: 3em;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+.player-overlay p span {
+  color: #a5b9ac;
+}
+
+.player .icon-button {
+  color: #fff;
+}
+
+.player .icon-button:hover {
+  background: #ffffff1f;
+}
+
+.player .icon-button[aria-pressed='true'] {
+  border-color: #91c7aa;
+  background: #91c7aa26;
+  color: #b4f2cf;
+}
+
+.playing-badge {
+  flex-shrink: 0;
+  margin-left: auto;
+  color: #a8d7b8;
+  font-size: 12px;
+}
+
+.player-bottom {
+  padding: 20px 40px 25px;
+  pointer-events: auto;
+}
+
+.timeline {
+  width: 100%;
+  height: 24px;
+  min-height: 24px;
+  margin-bottom: 14px;
+  accent-color: #91c7aa !important;
+}
+
+.player-buttons {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.timecode {
+  color: #d8e5dd;
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+}
+
+.player-spacer {
+  flex: 1;
+}
+
+.player-buttons > input {
+  width: 90px;
+  height: 24px;
+  min-height: 24px;
+}
+
+.player-buttons > select {
+  padding: 8px 10px;
+  border-color: #ffffff40;
+  background: #1f2e27;
+  color: #e3eee7;
+  font-size: 13px;
+}
+
+.player-hints {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: calc(3.2em + 14px) auto;
+  gap: 12px;
+  margin-top: 18px;
+  color: #a5b9ac;
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+/* Two hint lines keep pointer and controller targets at the same position. */
+.player .player-hints > [data-input-hints-host] {
+  display: block;
+  grid-row: 1;
+}
+
+.player-hints b {
+  margin-right: 4px;
+  color: #c4dbcc;
+  font-size: 11px;
+}
+
+.player-hints small {
+  grid-row: 2;
+  margin-left: auto;
+  font-size: 12px;
+}
+
+.player-center {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  text-align: center;
+  transform: translate(-50%, -50%);
+}
+
+.player-center p {
+  margin-top: 15px;
+  color: #c0d2c5;
+  font-size: 14px;
+  line-height: 1.8;
+}
+
+.loader {
+  display: inline-block;
+  width: 35px;
+  height: 35px;
+  border: 2px solid #ffffff35;
+  border-top-color: #98bfa8;
+  border-radius: 50%;
+  animation: spin 800ms linear infinite;
+}
+
+.player-error {
+  z-index: 2;
+  width: 520px;
+  max-width: 90%;
+  padding: 35px;
+  border: 1px solid #ffffff28;
+  border-radius: 20px;
+  background: #17251cee;
+}
+
+.player-error h2 {
+  font-size: 22px;
+  font-weight: 500;
+}
+
+.player-error .button-row {
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.player-error [data-input-hints-host] {
+  margin-top: 20px;
+  text-align: left;
+}
+
+.player-error button {
+  border-color: #718f7a;
+  background: #344b3d;
+  color: #e0eee4;
+}
+
+.seek-preview {
+  position: absolute;
+  top: 42%;
+  left: 50%;
+  padding: 25px 45px;
+  border-radius: 14px;
+  background: #16261de6;
+  text-align: center;
+  transform: translateX(-50%);
+}
+
+.seek-preview strong {
+  font-size: 36px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
+
+.seek-preview p {
+  margin-top: 10px;
+  color: #c4ddce;
+  font-size: 13px;
+}

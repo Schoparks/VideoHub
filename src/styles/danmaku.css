@@ -1,0 +1,41 @@
+.danmaku-layer {
+  position: absolute;
+  z-index: 1;
+  overflow: hidden;
+  pointer-events: none;
+  user-select: none;
+  font-family: 'Microsoft YaHei', 'PingFang SC', sans-serif;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.danmaku-layer span {
+  position: absolute;
+  left: 0;
+  top: 0;
+  white-space: nowrap;
+  /* Fixed text owns its alpha; moving text shares one non-overlapping lane texture. */
+  opacity: var(--danmaku-opacity, 1);
+  text-shadow: 1px 1px 2px #000, -1px -1px 2px #000;
+}
+
+.danmaku-lane {
+  position: absolute;
+  left: 0;
+  top: 0;
+  opacity: var(--danmaku-opacity, 1);
+  will-change: transform;
+}
+
+.danmaku-lane span {
+  opacity: 1;
+}
+
+.player-overlay {
+  z-index: 2;
+}
+
+.player-center,
+.seek-preview {
+  z-index: 3;
+}

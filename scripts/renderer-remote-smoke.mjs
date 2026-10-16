@@ -1,0 +1,103 @@
+import assert from 'node:assert/strict';
+import { mkdir, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import { launchHeadlessRenderer } from './headless-renderer.mjs';
+import { installReliabilityFixture } from './renderer-reliability-fixture.mjs';
+
+const output = resolve('.tmp/renderer-remote');
+await mkdir(output, { recursive: true });
+const install = new Function(`(${installReliabilityFixture})();
+  window.hubPlatform = 'android';
+  window.remoteExits = 0;
+  window.hubRemoteExit = () => window.remoteExits++;
+  window.reliability.failNextBootstrap = false;
+  window.reliability.boot.preferences.tvMode = true;
+`);
+const report = [];
+for (const viewport of [{ width: 1920, height: 1080 }, { width: 1440, height: 950 }]) {
+  const { page, errors, close } = await launchHeadlessRenderer(viewport, install);
+  const remote = async action => {
+    await page.evaluate(action => window.dispatchEvent(new CustomEvent('hub-remote', { detail: action })), action);
+    await page.waitForTimeout(60);
+  };
+  try {
+    const card = page.getByRole('button', { name: '播放 可靠性测试', exact: true }).first();
+    await card.waitFor();
+    assert.equal(await page.locator('.brand').evaluate(node => node.tabIndex), -1);
+    await card.focus();
+    await remote('menu');
+    await page.getByRole('dialog').waitFor();
+    assert.equal(await page.locator('.detail-heading h1').evaluate(node => node.tabIndex), -1);
+    await remote('menu');
+    assert.equal(await page.getByRole('dialog').count(), 1);
+    await remote('back');
+    await page.getByRole('dialog').waitFor({ state: 'detached' });
+    await page.waitForFunction(() => document.activeElement?.matches('.media-card'));
+    await remote('confirm');
+    await page.locator('video').waitFor();
+    await page.waitForFunction(() => document.querySelector('video')?.paused === false);
+    assert.equal(await page.locator('.player-overlay h2').evaluate(node => node.tabIndex), -1);
+    assert.equal(await page.locator('.player-overlay header p').evaluate(node => node.tabIndex), -1);
+    assert.equal(await page.getByRole('button', { name: '退出播放器全屏', exact: true }).count(), 0);
+    await remote('back');
+    await page.waitForFunction(() => document.querySelector('.player:not(.controls-visible)'));
+    await remote('right');
+    assert.equal(await page.locator('.player').getAttribute('data-seeking'), 'true');
+    assert.equal(await page.locator('video').evaluate(video => video.currentTime), 0);
+    await remote('back');
+    assert.equal(await page.locator('video').evaluate(video => video.currentTime), 0);
+    const timeline = page.getByRole('slider', { name: '播放进度', exact: true });
+    await timeline.focus();
+    await remote('right');
+    await remote('confirm');
+    assert.equal(await page.locator('video').evaluate(video => video.currentTime), 10);
+    await remote('menu');
+    await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === '播放设置');
+    await remote('confirm');
+    await page.getByRole('dialog').waitFor();
+    assert.equal(await page.getByRole('switch', { name: '电视模式', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('slider', { name: '摇杆死区', exact: true }).count(), 0);
+    const select = page.getByRole('combobox', { name: '播完后', exact: true });
+    await select.focus();
+    await remote('left');
+    assert.equal(await select.inputValue(), 'next');
+    await remote('right');
+    assert.equal(await select.inputValue(), 'pause');
+    await remote('back');
+    await remote('back');
+    await remote('back');
+    await page.locator('.player').waitFor({ state: 'detached' });
+    await page.waitForFunction(() => document.activeElement?.matches('.media-card'));
+    await remote('back');
+    await page.waitForFunction(() => document.activeElement?.matches('.nav-item.active'));
+    await remote('back');
+    assert.equal(await page.evaluate(() => window.remoteExits), 1);
+    await page.getByRole('textbox', { name: '搜索视频', exact: true }).focus();
+    await remote('confirm');
+    await page.locator('.screen-keyboard').waitFor();
+    await page.locator('[data-keyboard-start]').focus();
+    await remote('confirm');
+    assert.equal(await page.locator('[data-screen-keyboard]').getAttribute('data-composing'), 'true');
+    await page.locator('.candidate-row button').first().waitFor();
+    const candidates = await page.locator('.candidate-row button').evaluateAll(nodes => nodes.map(node => {
+      const bounds = node.getBoundingClientRect();
+      const parent = node.closest('.pinyin-candidates').getBoundingClientRect();
+      return { width: bounds.width, contained: bounds.left >= parent.left && bounds.right <= parent.right };
+    }));
+    assert.ok(candidates.length === 5 && candidates.every(candidate => candidate.width >= 50 && candidate.contained));
+    await remote('back');
+    assert.equal(await page.locator('[data-screen-keyboard]').getAttribute('data-composing'), 'false');
+    await remote('back');
+    await page.getByRole('dialog').waitFor({ state: 'detached' });
+    await remote('menu');
+    await page.getByRole('dialog', { name: '设置', exact: true }).waitFor();
+    assert.equal(await page.locator('.controller-focus-hint').textContent().then(text => /(?:PgUp|LT|Start|Esc|Tab)/.test(text)), false);
+    await page.screenshot({ path: `${output}/${viewport.width}-settings.png` });
+    assert.deepEqual(errors, []);
+    report.push({ viewport, checks: ['card menu and focus return', 'noninteractive headings/logo excluded',
+      'seek confirm/cancel', 'player menu and modal isolation', 'settings/select', 'layered back and root exit',
+      'screen keyboard composing/back and five visible candidates', 'remote-only hints'], passed: true });
+  } finally { await close(); }
+}
+await writeFile(`${output}/report.json`, JSON.stringify(report, null, 2));
+console.log(JSON.stringify(report, null, 2));

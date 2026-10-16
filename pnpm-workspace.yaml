@@ -1,0 +1,6 @@
+allowBuilds:
+  electron: true
+  esbuild: true
+  electron-winstaller: false
+  core-js: false
+verifyDepsBeforeRun: false

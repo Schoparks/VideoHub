@@ -1,0 +1,97 @@
+.screen-keyboard {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 18px;
+}
+
+.keyboard-toolbar,
+.keyboard-row,
+.candidate-pages {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+}
+
+.keyboard-toolbar button {
+  flex: 1;
+  padding: 9px 5px;
+  white-space: nowrap;
+}
+
+.keyboard-toolbar [aria-pressed="true"] {
+  background: var(--accent-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.keyboard-keys {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.keyboard-row > button {
+  flex: 0 1 calc((100% - 45px) / 10);
+  min-width: 0;
+  min-height: 42px;
+  padding: 8px 0;
+}
+
+.keyboard-bottom > button {
+  flex: 1;
+}
+
+.pinyin-candidates {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
+  min-height: 82px;
+  padding: 9px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface-hover);
+}
+
+.pinyin-candidates output {
+  grid-column: 1 / -1;
+  min-height: 20px;
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.candidate-row {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 5px;
+  min-width: 0;
+}
+
+.pinyin-candidates > span,
+.pinyin-candidates > button {
+  grid-column: 1 / -1;
+}
+
+.candidate-row button {
+  min-width: 0;
+  padding: 8px 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.candidate-pages {
+  align-items: center;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.candidate-pages button {
+  padding: 8px;
+  min-width: 36px;
+}
+
+html[data-tv="true"] .keyboard-row > button {
+  min-height: 52px;
+}

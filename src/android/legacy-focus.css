@@ -1,0 +1,64 @@
+/* Chromium 66 discards selector lists containing :is/:has/:focus-visible. */
+html[data-legacy-webview='true'][data-input-mode='remote'] :focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  box-shadow: none;
+}
+
+html[data-legacy-webview='true'] [data-focus-retain][aria-disabled='true']:focus {
+  opacity: 1;
+}
+
+html[data-legacy-webview='true'] .global-search:focus-within {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+html[data-legacy-webview='true'] .global-search input:focus,
+html[data-legacy-webview='true'] .player .timeline:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+html[data-legacy-webview='true'] .player .timeline:focus::-webkit-slider-thumb {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+html[data-legacy-webview='true'] .card-details {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+html[data-legacy-webview='true'] .media-card:focus .play-indicator {
+  opacity: 1;
+}
+
+html[data-legacy-webview='true'] .player .episode-list,
+html[data-legacy-webview='true'] .player .player-option-list {
+  padding: 12px;
+  margin: -12px;
+}
+
+html[data-legacy-webview='true'] .player .episode-panel > [data-input-hints-host],
+html[data-legacy-webview='true'] .player .player-option-panel > [data-input-hints-host] {
+  display: block;
+  min-height: calc(3.2em + 14px);
+  flex-shrink: 0;
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+html[data-legacy-webview='true'] .player .episode-panel > [data-input-hints-host] {
+  padding-top: 21px;
+  min-height: calc(3.2em + 35px);
+}
+
+html[data-legacy-webview='true'] .player [data-input-hints-host] > .controller-focus-hint[hidden] {
+  display: flex;
+  visibility: hidden;
+}
+
+html[data-legacy-webview='true'] .player-hints > [data-input-hints-host] {
+  background: #ffffff99;
+}

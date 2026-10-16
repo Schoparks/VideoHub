@@ -1,0 +1,126 @@
+.brand {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-shrink: 0;
+  gap: 12px;
+  margin-right: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+
+.brand:hover {
+  background: none;
+}
+
+.brand > span:last-child {
+  font-size: 24px;
+  font-weight: 700;
+  letter-spacing: 3px;
+}
+
+.brand small {
+  display: block;
+  margin-top: 1px;
+  color: var(--muted);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 2.5px;
+}
+
+.brand-mark {
+  display: grid;
+  place-items: center;
+  width: 40px;
+  height: 42px;
+  flex-shrink: 0;
+  border: 1px solid #ffffff66;
+  border-radius: 14px;
+  background: linear-gradient(145deg, #63a9fa, #075acb);
+  box-shadow: inset 0 1px 0 #ffffff66, 0 4px 12px #075ecb1f;
+  color: #ffffff;
+}
+
+.brand-mark svg {
+  margin-left: 2px;
+}
+
+.navigation-bar {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-basis: 100%;
+  min-width: 0;
+}
+
+.navigation-bar nav {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  overflow-x: auto;
+  padding: 7px;
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  background: var(--glass-solid);
+  scroll-padding-inline: 7px;
+  scrollbar-width: thin;
+}
+
+.nav-item {
+  position: relative;
+  justify-content: center;
+  min-height: 44px;
+  flex-shrink: 0;
+  gap: 10px;
+  padding: 0 18px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.navigation-bar > .nav-item {
+  margin-left: auto;
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-solid);
+}
+
+.nav-item:hover {
+  background: var(--surface-hover);
+  color: var(--text);
+}
+
+.nav-item.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+  box-shadow: inset 0 1px 0 #ffffff38;
+}
+
+.controller-status {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.controller-status > svg {
+  flex-shrink: 0;
+}
+
+.controller-status b {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.controller-status i {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--accent);
+}

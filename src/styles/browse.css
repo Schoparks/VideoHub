@@ -1,0 +1,262 @@
+section {
+  margin-bottom: 30px;
+}
+
+.section-heading {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.section-heading h2 {
+  font-size: 19px;
+  font-weight: 600;
+}
+
+.empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  min-height: 220px;
+  padding: 32px 24px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+  text-align: center;
+}
+
+.empty-icon {
+  display: grid;
+  place-items: center;
+  width: 52px;
+  height: 52px;
+  margin-bottom: 16px;
+  border-radius: 15px;
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.empty-state h3 {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.empty-state p {
+  max-width: 440px;
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 13px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.empty-state .button-row {
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.local-invitation {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 18px;
+  padding: 22px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+}
+
+.folder-illustration {
+  display: grid;
+  place-items: center;
+  width: 60px;
+  height: 56px;
+  flex-shrink: 0;
+  border-radius: var(--radius-md);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.local-invitation h3 {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.local-invitation button {
+  margin-left: auto;
+  color: var(--accent);
+}
+
+.tabs {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 0 24px;
+  width: fit-content;
+  max-width: 100%;
+  padding: 7px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-lg);
+  background: var(--surface);
+}
+
+.tabs button {
+  padding: 9px 15px;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-size: 14px;
+  white-space: nowrap;
+}
+
+.tabs button:hover {
+  background: var(--surface-hover);
+}
+
+.tabs button.active {
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.tab-spacer {
+  flex: 1;
+}
+
+.chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 22px;
+}
+
+.chips button {
+  max-width: 100%;
+  padding: 8px 14px;
+  border-radius: 20px;
+  color: var(--muted);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.chips button.selected {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.chip-label {
+  min-width: 0;
+  max-width: 28ch;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.chips button[aria-pressed='true'] {
+  box-shadow: inset 0 -2px 0 var(--accent);
+  font-weight: 600;
+}
+
+.chips small {
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.count {
+  padding: 1px 6px;
+  border-radius: 10px;
+  background: var(--surface);
+  font-size: 12px;
+}
+
+.library-toolbar {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 24px;
+}
+
+.library-toolbar > span {
+  margin-right: auto;
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.feed-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  margin: 28px auto 0;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.inline-error {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 18px;
+  padding: 12px 16px;
+  border: 1px solid var(--warning-line);
+  border-radius: var(--radius-md);
+  background: var(--warning-bg);
+  color: var(--warning);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.inline-error button {
+  flex-shrink: 0;
+  border-color: var(--warning-line);
+  background: transparent;
+}
+
+.feed-results > .inline-error:not(:first-child) {
+  margin-top: 18px;
+}
+
+.preview-notice {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  margin-bottom: 20px;
+  padding: 11px 14px;
+  border-radius: var(--radius-sm);
+  background: var(--info-bg);
+  color: var(--info);
+  font-size: 13px;
+}
+
+.preview-notice svg {
+  flex-shrink: 0;
+}
+
+.loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 32px;
+  color: var(--muted);
+  font-size: 14px;
+}
+
+.spin {
+  animation: spin 1.3s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,0 +1,140 @@
+.settings-heading {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 26px 0 12px;
+  color: var(--muted);
+}
+
+.settings-heading:first-child {
+  margin-top: 0;
+}
+
+.settings-heading h3 {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.setting-row {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  min-height: 72px;
+  padding: 15px 12px;
+  border-bottom: 1px solid var(--line);
+  cursor: pointer;
+}
+
+.setting-row:focus-within {
+  border-radius: var(--radius-sm);
+  background: var(--surface-hover);
+}
+
+.setting-row > span:first-child {
+  min-width: 0;
+  flex: 1;
+}
+
+.setting-row b {
+  display: block;
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.setting-row small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.setting-row input[role='switch'] {
+  position: relative;
+  width: 48px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  border: 1px solid var(--line-strong);
+  border-radius: 16px;
+  appearance: none;
+  background: var(--surface-hover);
+  cursor: pointer;
+}
+
+.setting-row input[role='switch']::before {
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: #ffffff;
+  box-shadow: 0 1px 4px #10182730;
+  content: '';
+  transition: transform 160ms;
+}
+
+.setting-row input[role='switch']:checked {
+  border-color: var(--accent);
+  background: #0877e8;
+}
+
+.setting-row input[role='switch']:checked::before {
+  background: #ffffff;
+  transform: translateX(18px);
+}
+
+.setting-row input[type='range'] {
+  width: 130px;
+  flex-shrink: 0;
+}
+
+.setting-value {
+  min-width: 42px;
+  color: var(--text);
+  font-size: 13px;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+}
+
+.device-status {
+  padding: 12px 15px;
+  border-radius: var(--radius-sm);
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 13px;
+  overflow-wrap: anywhere;
+}
+
+.bindings {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 18px 0;
+}
+
+.bindings button {
+  justify-content: space-between;
+  min-width: 0;
+  padding: 12px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.bindings button > span {
+  min-width: 0;
+}
+
+.bindings kbd {
+  color: var(--muted);
+  font: inherit;
+  font-size: 12px;
+  text-align: right;
+  overflow-wrap: anywhere;
+}
+
+.bindings [data-calibrating] {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}

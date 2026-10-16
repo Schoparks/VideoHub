@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <title>映集</title>
+  <rect x="60" y="60" width="392" height="392" rx="112" fill="#35745c"
+    transform="rotate(-7 256 256)" />
+  <path d="M214 176c-8-5-18 1-18 11v138c0 10 10 16 18 11l112-69c8-5 8-17 0-22z"
+    fill="#ffffff" />
+</svg>

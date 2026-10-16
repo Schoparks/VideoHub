@@ -1,0 +1,3 @@
+html[data-card-columns]:not([data-card-columns='0']) .media-grid {
+  grid-template-columns: repeat(var(--card-columns), minmax(0, 1fr));
+}

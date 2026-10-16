@@ -1,0 +1,27 @@
+.player :is(.episode-panel, .player-option-panel) > [data-input-hints-host] {
+  --player-menu-hint-padding: 0px;
+  display: block;
+  flex-shrink: 0;
+  min-height: calc(3.2em + 14px + var(--player-menu-hint-padding));
+  padding-top: var(--player-menu-hint-padding);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+.player .episode-panel > [data-input-hints-host] {
+  --player-menu-hint-padding: 21px;
+}
+
+.player :is(.episode-panel, .player-option-panel) > [data-input-hints-host]:empty,
+.player :is(.episode-panel, .player-option-panel) > [data-input-hints-host]:has(> .controller-focus-hint[hidden]) {
+  display: block;
+}
+
+.player :is(.episode-panel, .player-option-panel) > [data-input-hints-host] > .controller-focus-hint[hidden] {
+  display: flex;
+  visibility: hidden;
+}
+
+[data-tv='true'] .player :is(.episode-panel, .player-option-panel) > [data-input-hints-host] {
+  font-size: 14px;
+}

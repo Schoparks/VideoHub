@@ -1,0 +1,196 @@
+[data-tv='true'] {
+  --control-height: 48px;
+  font-size: 17px;
+}
+
+[data-tv='true'] .media-grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 30px 26px;
+}
+
+[data-tv='true'] .card-copy h3 {
+  min-height: 56px;
+  font-size: 19px;
+}
+
+[data-tv='true'] .card-copy p,
+[data-tv='true'] .card-episode {
+  font-size: 15px;
+}
+
+[data-tv='true'] .source-badge {
+  font-size: 13px;
+}
+
+[data-tv='true'] .detail-heading h1 {
+  font-size: 27px;
+}
+
+[data-tv='true'] .detail-heading .muted,
+[data-tv='true'] .part-buttons button {
+  font-size: 16px;
+}
+
+[data-tv='true'] .duration {
+  font-size: 15px;
+}
+
+[data-tv='true'] .card-details {
+  width: 48px;
+  height: 48px;
+}
+
+[data-tv='true'] .nav-item {
+  min-height: 58px;
+  font-size: 18px;
+}
+
+[data-tv='true'] .controller-status b {
+  font-size: 14px;
+}
+
+[data-tv='true'] .topbar {
+  min-height: 86px;
+}
+
+[data-tv='true'] .global-search {
+  width: 420px;
+  height: 50px;
+}
+
+[data-tv='true'] .global-search input {
+  font-size: 16px;
+}
+
+[data-tv='true'] .global-search button {
+  width: 42px;
+  min-height: 42px;
+}
+
+[data-tv='true'] .url-form > label,
+[data-tv='true'] .url-form input {
+  font-size: 17px;
+}
+
+[data-tv='true'] .url-form > .error-message {
+  font-size: 16px;
+}
+
+[data-tv='true'] .url-form > .small {
+  font-size: 14px;
+}
+
+[data-tv='true'] .profile {
+  width: 48px;
+  height: 48px;
+}
+
+[data-tv='true'] .page-top h1 {
+  font-size: 34px;
+}
+
+[data-tv='true'] .section-heading h2 {
+  font-size: 24px;
+}
+
+[data-tv='true'] .page-actions button,
+[data-tv='true'] .tabs button,
+[data-tv='true'] .chips button,
+[data-tv='true'] .text-button {
+  font-size: 16px;
+}
+
+[data-tv='true'] .input-hints {
+  min-height: 62px;
+  font-size: 14px;
+}
+
+[data-tv='true'] .input-hints kbd {
+  font-size: 13px;
+}
+
+[data-tv='true'] button:focus-visible {
+  outline-width: 2px;
+  outline-offset: 3px;
+}
+
+[data-tv='true'] .modal {
+  width: 680px;
+}
+
+[data-tv='true'] .modal.wide {
+  width: 900px;
+}
+
+[data-tv='true'] .modal-header h2 {
+  font-size: 27px;
+}
+
+[data-tv='true'] .auth-option b,
+[data-tv='true'] .setting-row b,
+[data-tv='true'] .settings-heading h3,
+[data-tv='true'] .bindings button,
+[data-tv='true'] .part-picker label,
+[data-tv='true'] .part-picker select,
+[data-tv='true'] .queue-title b {
+  font-size: 17px;
+}
+
+[data-tv='true'] .auth-option small,
+[data-tv='true'] .setting-row small,
+[data-tv='true'] .auth-state,
+[data-tv='true'] .security-note,
+[data-tv='true'] .bindings kbd,
+[data-tv='true'] .device-status,
+[data-tv='true'] .notice,
+[data-tv='true'] .queue-title small {
+  font-size: 14px;
+}
+
+[data-tv='true'] .dynamic-text,
+[data-tv='true'] .dynamic-original .dynamic-text,
+[data-tv='true'] .dynamic-entry h3 {
+  font-size: 19px;
+}
+
+[data-tv='true'] .dynamic-entry time,
+[data-tv='true'] .dynamic-repost,
+[data-tv='true'] .empty-state p,
+[data-tv='true'] .description,
+[data-tv='true'] .player-overlay p,
+[data-tv='true'] .timecode,
+[data-tv='true'] .player-buttons > select {
+  font-size: 16px;
+}
+
+[data-tv='true'] .player-hints,
+[data-tv='true'] .player-hints b,
+[data-tv='true'] .player-hints small {
+  font-size: 14px;
+}
+
+[data-tv='true'] .player-overlay h2 {
+  font-size: 28px;
+}
+
+[data-tv='true'] .playing-badge,
+[data-tv='true'] .player .episode-toggle {
+  font-size: 16px;
+}
+
+[data-tv='true'] .episode-toggle span {
+  font-size: 14px;
+}
+
+[data-tv='true'] .library-toolbar > span,
+[data-tv='true'] .loading,
+[data-tv='true'] .working-pill,
+[data-tv='true'] .inline-error {
+  font-size: 16px;
+}
+
+@media (max-width: 1100px) {
+  [data-tv='true'] .media-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

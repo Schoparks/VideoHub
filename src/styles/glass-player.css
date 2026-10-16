@@ -1,0 +1,223 @@
+/* A tinted glass control layer stays readable over arbitrary video frames. */
+.player {
+  --text: #f3f6fc;
+  --muted: #c4cede;
+  --line: #ffffff29;
+  --line-strong: #ffffff59;
+  --accent: #b5d5ff;
+  --accent-hover: #d8e8ff;
+  --accent-soft: #28496d;
+  --accent-border: #8aafe0;
+  --on-accent: #152b47;
+  --glass-solid: #202938;
+  --glass-fill: #09121f38;
+  --glass-panel-fill: #152033a6;
+  --glass-edge: #ffffff66;
+  --glass-sheen: #ffffff1f;
+  --glass-shadow: 0 8px 28px #00000030, inset 0 1px 0 #ffffff80, inset 0 -1px 0 #ffffff24;
+  background: #090c12;
+}
+
+.player-overlay {
+  background: linear-gradient(#070b1333, transparent 18%, transparent 80%, #070b1333);
+}
+
+.player-overlay > header {
+  margin: 16px 28px 0;
+  padding: 12px 16px;
+  border-radius: var(--radius-lg);
+}
+
+.player-bottom {
+  margin: 0 28px 16px;
+  padding: 10px 18px;
+  border-radius: var(--radius-lg);
+}
+
+.player-overlay > header,
+.player-bottom,
+.player .episode-panel,
+.player .player-option-panel,
+.player .player-error,
+.player .seek-preview {
+  border: 1px solid var(--glass-edge);
+  background: var(--glass-solid);
+  box-shadow: var(--glass-shadow);
+}
+
+.player .episode-panel,
+.player .player-option-panel,
+.player .player-error,
+.player .seek-preview {
+  border-radius: var(--radius-lg);
+}
+
+.player .player-buttons > button,
+.player .player-overlay > header > button {
+  border: 1px solid var(--glass-edge);
+  border-radius: 999px;
+  background: #ffffff99;
+  color: #1c2331;
+}
+
+.player .player-buttons > button:hover,
+.player .player-overlay > header > button:hover {
+  background: #ffffffc2;
+}
+
+.player .icon-button[aria-pressed='true'] {
+  border-color: #ffffffb3;
+  background: #cfe3ffc9;
+  color: #17477f;
+}
+
+.player .timeline {
+  margin-bottom: 6px;
+  accent-color: #b5d5ff !important;
+}
+
+.player .player-option,
+.player .episode-option,
+.player .player-error button {
+  border-color: var(--glass-edge);
+  border-radius: var(--radius-md);
+  background: #ffffff08;
+  color: var(--text);
+}
+
+.player .player-option:hover,
+.player .episode-option:hover,
+.player .player-error button:hover {
+  background: #ffffff18;
+}
+
+.player .player-option[aria-pressed='true'],
+.player .episode-option.selected {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--text);
+}
+
+.player .playing-badge,
+.player .episode-number {
+  color: var(--accent);
+}
+
+.player .timecode,
+.player .playing-badge {
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: #ffffff99;
+}
+
+.player-overlay > header > div {
+  text-shadow: 0 1px 3px #000000, 0 0 12px #00000099;
+}
+
+.player .player-hints {
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-rows: minmax(calc(3.2em + 6px), auto);
+  align-items: start;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.player .player-hints > [data-input-hints-host] {
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: transparent;
+}
+
+.player .player-hints > [data-input-hints-host]:has(> .controller-focus-hint:not([hidden])) {
+  background: #ffffff99;
+}
+
+.player .player-hints small {
+  grid-row: 1;
+  margin-top: 3px;
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #ffffff99;
+  white-space: nowrap;
+}
+
+.player-overlay p,
+.player-overlay p span,
+.player .player-hints,
+.player .player-hints b,
+.player .timecode,
+.player .episode-toggle span,
+.player .episode-option small,
+.player .episode-panel header p,
+.player .episode-panel-hint,
+.player .player-option-panel footer,
+.player .player-center p,
+.player .seek-preview p {
+  color: var(--muted);
+}
+
+.player .controller-focus-hint {
+  color: var(--text);
+}
+
+.player .controller-actions kbd {
+  border-color: var(--line-strong);
+  color: var(--accent);
+}
+
+.player .timecode,
+.player .playing-badge,
+.player .player-hints small,
+.player .player-hints b,
+.player .player-hints .controller-focus-hint {
+  color: #1c2331;
+}
+
+.player .player-hints .controller-actions kbd {
+  border-color: #34476066;
+  color: #233a58;
+}
+
+.player .player-buttons .episode-toggle span {
+  color: #243044;
+}
+
+.player .episode-list {
+  scrollbar-color: #798ba6 transparent;
+}
+
+.player .loader {
+  border-top-color: var(--accent);
+}
+
+@supports (backdrop-filter: blur(1px)) {
+  .player-overlay > header,
+  .player-bottom,
+  .player .episode-panel,
+  .player .player-option-panel,
+  .player .player-error,
+  .player .seek-preview {
+    background-color: var(--glass-fill);
+    background-image: linear-gradient(150deg, var(--glass-sheen), transparent 55%);
+    backdrop-filter: var(--glass-optics, var(--glass-filter));
+  }
+
+  .player .episode-panel,
+  .player .player-option-panel,
+  .player .player-error {
+    background-color: var(--glass-panel-fill);
+  }
+}
+
+[data-tv='true'] .player-overlay > header {
+  margin: 24px 36px 0;
+}
+
+[data-tv='true'] .player-bottom {
+  margin: 0 36px 24px;
+}
+
+.player button:focus-visible,
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .player button:focus {
+  box-shadow: none;
+}

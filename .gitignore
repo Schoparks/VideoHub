@@ -1,0 +1,80 @@
+# Dependencies and build output
+node_modules/
+.pnpm-store/
+dist/
+dist-electron/
+release/
+coverage/
+*.tsbuildinfo
+*.tgz
+
+# Local data, browser profiles and test artifacts
+.data/
+.tmp/
+user-data/
+userdata/
+playwright-report/
+test-results/
+*.log
+*.dmp
+account.enc
+Local State
+Cookies
+Cookies-journal
+Login Data
+Login Data-journal
+Web Data
+Web Data-journal
+
+# Environment and machine configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+*.local
+local.properties
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+Desktop.ini
+*.swp
+*.swo
+*~
+
+# Credentials and signing material: back up privately outside Git
+.ssh/
+.aws/
+.azure/
+.gnupg/
+.secrets/
+secrets/
+credentials/
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.mobileprovision
+*.provisionprofile
+.netrc
+_netrc
+.git-credentials
+id_rsa*
+id_ed25519*
+
+# SDK caches and native build output
+.gradle/
+.cxx/
+android/build/
+android/app/build/
+*.apk
+*.aab
+*.idsig
+*.class
+*.dex
+
+# Local agent configuration
+.agents/
+.codex/

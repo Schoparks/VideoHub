@@ -1,0 +1,163 @@
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: var(--control-height);
+  padding: 9px 15px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: inherit;
+  cursor: pointer;
+  transition: background 160ms, border-color 160ms, transform 160ms;
+}
+
+button:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+button:active:not(:disabled):not([aria-disabled='true']) {
+  transform: translateY(1px);
+}
+
+button:disabled,
+button[aria-disabled='true'] {
+  opacity: 0.5;
+  cursor: default;
+}
+
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+[tabindex]:focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+button svg {
+  flex-shrink: 0;
+}
+
+input,
+select {
+  min-width: 0;
+  min-height: var(--control-height);
+  max-width: 100%;
+  padding: 10px 12px;
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface);
+  color: var(--text);
+}
+
+input::placeholder {
+  color: var(--subtle);
+  opacity: 1;
+}
+
+input[type='checkbox'] {
+  width: 20px;
+  height: 20px;
+  min-height: 20px;
+  flex-shrink: 0;
+  accent-color: var(--accent);
+}
+
+input[type='range'] {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  accent-color: var(--accent);
+}
+
+h1,
+h2,
+h3,
+p {
+  margin: 0;
+}
+
+button.primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--on-accent);
+  font-weight: 600;
+}
+
+button.primary:hover {
+  border-color: var(--accent-hover);
+  background: var(--accent-hover);
+}
+
+.text-button {
+  padding: 7px 4px;
+  border: 0;
+  background: transparent;
+  color: var(--accent);
+  font-size: 13px;
+}
+
+.text-button:hover {
+  background: transparent;
+  color: var(--accent-hover);
+}
+
+.icon-button {
+  width: var(--control-height);
+  height: var(--control-height);
+  padding: 8px;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+}
+
+.button-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.muted {
+  color: var(--muted);
+  line-height: 1.75;
+}
+
+.small {
+  font-size: 12px;
+}
+
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 9px;
+  border-radius: 20px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.success {
+  color: var(--accent);
+}
+
+.danger {
+  color: var(--danger);
+}

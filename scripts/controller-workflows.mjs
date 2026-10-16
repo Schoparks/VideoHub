@@ -1,0 +1,156 @@
+import { _electron as electron } from 'playwright';
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises';
+import { resolve } from 'node:path';
+import assert from 'node:assert/strict';
+import { frontendFixture, installFrontendFixture, installFrontendImages } from './frontend-fixture.mjs';
+import { connectPad, pressPad, focusGridFixture } from './controller-fixture.mjs';
+import { assertFrontendLayout } from './frontend-layout.mjs';
+
+const output = resolve('.tmp/controller-workflows');
+await mkdir(output, { recursive: true });
+const profile = await mkdtemp(resolve(output, 'profile-'));
+const env = { ...process.env, YINGJI_TEST_DATA: profile };
+delete env.ELECTRON_RUN_AS_NODE; delete env.VITE_DEV_SERVER_URL;
+const app = await electron.launch({ args: ['.'], cwd: resolve('.'), env, timeout: 30000 });
+let page;
+const errors = [], checks = [];
+try {
+  page = await app.firstWindow(); page.setDefaultTimeout(15000);
+  page.on('pageerror', error => errors.push(error.message));
+  await page.getByRole('heading', { name: '首页', exact: true }).waitFor();
+  const boot = await page.evaluate(() => window.hub.bootstrap());
+  await app.evaluate(installFrontendFixture, frontendFixture(boot));
+  await installFrontendImages(page); await page.reload();
+  await page.waitForFunction(() => document.querySelectorAll('.media-card').length === 12);
+  await connectPad(page);
+  const press = (index, duration) => pressPad(page, index, duration);
+  const focused = () => page.evaluate(() => document.activeElement?.id || document.activeElement?.getAttribute('aria-label'));
+
+  await page.getByRole('button', { name: '打开链接', exact: true }).focus();
+  await press(9);
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  checks.push('Start does not activate focused browse controls');
+  await press(0);
+  await page.getByRole('dialog', { name: '打开链接' }).waitFor();
+  await press(0);
+  await page.getByRole('textbox', { name: '输入内容', exact: true }).waitFor();
+  assert.equal(await page.locator('[role="dialog"][inert]').count(), 1);
+  await page.getByRole('button', { name: 'a', exact: true }).focus(); await press(0);
+  assert.equal(await page.getByRole('textbox', { name: '输入内容', exact: true }).inputValue(), 'a');
+  await page.getByRole('button', { name: '完成', exact: true }).focus(); await press(0);
+  await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === '视频地址');
+  assert.equal(await page.getByRole('textbox', { name: '视频地址', exact: true }).inputValue(), 'a');
+  await press(0);
+  await page.getByRole('button', { name: 'b', exact: true }).focus(); await press(0);
+  await press(1);
+  assert.equal(await page.getByRole('textbox', { name: '视频地址', exact: true }).inputValue(), 'a');
+  await press(1);
+  await page.waitForFunction(() => !document.querySelector('[role="dialog"]'));
+  checks.push('nested screen keyboard edits URL input, commits or cancels, restores input and opener');
+
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('switch', { name: '深色外观', exact: true }).focus();
+  await press(0, 900);
+  assert.equal(await page.getByRole('switch', { name: '深色外观', exact: true }).isChecked(), true);
+  assert.match(await page.locator('.controller-focus-hint').innerText(), /已开启/);
+  const binding = page.locator('.bindings button').filter({ hasText: /^确认/ });
+  await binding.focus(); await press(0);
+  await page.waitForFunction(() => !!document.querySelector('[data-calibrating="true"]'));
+  await press(1);
+  await page.waitForFunction(() => !document.querySelector('[data-calibrating="true"]'));
+  const remapped = await page.evaluate(() => window.hub.bootstrap());
+  assert.equal(remapped.preferences.gamepadMap.confirm, 1);
+  assert.equal(remapped.preferences.gamepadMap.back, 0);
+  assert.equal(await page.getByRole('dialog', { name: '设置', exact: true }).count(), 1);
+  assert.match(await page.locator('.controller-focus-hint').innerText(), /B/);
+  await binding.focus(); await press(1); await press(0, 800);
+  await page.waitForFunction(() => !document.querySelector('[data-calibrating="true"]'));
+  assert.equal(await page.getByRole('dialog').count(), 1);
+  await binding.focus(); await press(1); await page.keyboard.press('Escape');
+  assert.equal(await page.locator('[data-calibrating="true"]').count(), 0);
+  assert.equal(await page.getByRole('dialog').count(), 1);
+  await page.getByRole('button', { name: '恢复默认映射' }).click();
+  await press(1);
+  await page.waitForFunction(() => !document.querySelector('[role="dialog"]'));
+  checks.push('held confirm activates once; mapping swaps, hints update, binding Back hold and Escape cancel without closing settings');
+
+  await focusGridFixture(page);
+  await press(15); assert.equal(await focused(), 'grid-card-1');
+  await press(13); assert.equal(await focused(), 'grid-card-4');
+  await press(14); assert.equal(await focused(), 'grid-card-3');
+  await page.locator('#grid-range').focus();
+  for (let index = 0; index < 4; index++) await press(15);
+  assert.equal(await page.locator('#grid-range').inputValue(), '0.36');
+  await page.locator('#grid-card-3').focus();
+  await page.waitForTimeout(130);
+  await page.locator('#grid-card-3').evaluate(element => element.closest('.media-card-wrap').remove());
+  await page.waitForFunction(() => document.activeElement?.id === 'grid-card-4');
+  await page.evaluate(() => document.querySelector('#controller-grid').remove());
+  checks.push('spatial movement follows grid rows and columns; sliders preserve step precision; removed focus recovers to adjacent item while idle');
+
+  await page.getByRole('button', { name: '打开链接', exact: true }).focus();
+  await page.evaluate(() => {
+    Object.defineProperty(document, 'hasFocus', { configurable: true, value: () => false });
+    window.dispatchEvent(new Event('blur'));
+  });
+  await press(0);
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  await page.evaluate(() => {
+    window.testPad.buttons[0].pressed = true;
+    Object.defineProperty(document, 'hasFocus', { configurable: true, value: () => true });
+    window.dispatchEvent(new Event('focus'));
+  });
+  await page.waitForTimeout(150);
+  assert.equal(await page.getByRole('dialog').count(), 0);
+  await page.evaluate(() => { window.testPad.buttons[0] = { pressed: false, value: 0 }; });
+  await page.waitForTimeout(80); await press(0);
+  await page.getByRole('dialog', { name: '打开链接' }).waitFor(); await press(1);
+  checks.push('simulated background ignores input and refocus waits for held buttons to release');
+
+  await page.getByRole('button', { name: '我的收藏', exact: true }).click();
+  await page.getByRole('button', { name: /^播放队列/ }).click();
+  await page.locator('.queue-row').last().getByRole('button', { name: /^移除/ }).focus();
+  await press(0);
+  await page.waitForFunction(() => document.querySelectorAll('.queue-row').length === 1);
+  assert.equal(await page.evaluate(() => document.activeElement !== document.body), true);
+  await page.screenshot({ path: resolve(output, 'queue-focus.png') });
+  await press(5);
+  assert.equal(await page.evaluate(() => document.activeElement?.getAttribute('aria-current')), 'page');
+  await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('switch', { name: '电视模式', exact: true }).focus(); await press(0);
+  await page.setViewportSize({ width: 1920, height: 1080 });
+  await page.waitForFunction(() => document.documentElement.dataset.tv === 'true');
+  await assertFrontendLayout(page, 'controller-settings-tv');
+  await page.screenshot({ path: resolve(output, 'settings-tv.png') });
+  await press(1);
+  await page.getByRole('button', { name: '首页', exact: true }).click();
+  await page.setViewportSize({ width: 980, height: 680 });
+  await page.locator('.media-card').first().focus(); await press(15); await press(14);
+  await assertFrontendLayout(page, 'controller-long-title-tv');
+  assert.equal(await page.locator('.controller-focus-hint').isVisible(), true);
+  await page.screenshot({ path: resolve(output, 'home-tv-980.png') });
+  checks.push('controller hints and focus fit dark TV settings and 980px long-title grid');
+  await page.evaluate(() => {
+    const second = { ...window.testPad, id: 'Second simulated controller', index: 1, buttons: Array.from({ length: 20 }, () => ({ pressed: false, value: 0 })) };
+    window.testPad.connected = false;
+    window.testPad = second;
+  });
+  await page.waitForFunction(() => document.querySelector('.controller-status')?.getAttribute('title') === 'Second simulated controller');
+  await press(15);
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.inputMode), 'gamepad');
+  await page.evaluate(() => { window.testPad.connected = false; });
+  await page.waitForFunction(() => !document.querySelector('.controller-status'));
+  assert.equal(await page.evaluate(() => document.documentElement.dataset.inputMode), 'keyboard');
+  checks.push('controller replacement and disconnection keep navigation usable');
+  assert.deepEqual(errors, []);
+  checks.push('queue removal keeps a visible focus; shoulder navigation focuses current section');
+  await writeFile(resolve(output, 'result.json'), JSON.stringify({ result: 'passed', checks, errors }, null, 2));
+  console.log(JSON.stringify({ result: 'passed', checks, errors }, null, 2));
+} catch (error) {
+  if (page && !page.isClosed()) {
+    console.error(await page.evaluate(() => ({ focus: document.activeElement?.outerHTML, mode: document.documentElement.dataset.inputMode, focused: document.hasFocus() })));
+    await page.screenshot({ path: resolve(output, 'failure.png'), timeout: 3000 }).catch(() => {});
+    console.error(await page.locator('body').innerText({ timeout: 2000 }).catch(() => 'unavailable'));
+  }
+  throw error;
+} finally { await app.close(); }

@@ -1,0 +1,5 @@
+.player :is(.episode-list, .player-option-list) {
+  padding: 12px;
+  margin: -12px;
+  scroll-padding-block: 12px;
+}

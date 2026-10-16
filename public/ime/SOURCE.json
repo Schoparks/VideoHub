@@ -1,0 +1,8 @@
+{
+  "origin": "https://android.googlesource.com/platform/packages/inputmethods/PinyinIME/+/49aebad1c1cfbbcaa9288ffed5161e79e57c3679/jni/data/rawdict_utf16_65105_freq.txt",
+  "commit": "49aebad1c1cfbbcaa9288ffed5161e79e57c3679",
+  "sha256": "408700f28a56091fa07f3b849a0f134fbfc71e6b2ae9b3f52973a5b076f599ff",
+  "entries": 55320,
+  "license": "Apache-2.0",
+  "changes": "UTF-16 to JSON; simplified entries only; frequency descending; joined syllables"
+}

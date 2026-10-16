@@ -1,0 +1,66 @@
+/* Native preferences change material treatment without moving controls. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  :root,
+  [data-theme='dark'],
+  .player {
+    --glass-fill: var(--glass-solid);
+    --glass-panel-fill: var(--glass-solid);
+    --glass-sheen: transparent;
+    --glass-filter: none;
+    --glass-edge: var(--line-strong);
+    --ambient-blue: var(--bg);
+    --ambient-violet: var(--bg);
+  }
+
+  .modal-scrim,
+  .navigation-bar nav,
+  .navigation-bar > .nav-item,
+  .global-search,
+  .tv-button,
+  .input-hints,
+  .working-pill,
+  .modal,
+  .modal-header,
+  .modal-input-hints,
+  .player-overlay > header,
+  .player-bottom,
+  .player .episode-panel,
+  .player .player-option-panel,
+  .player .player-error,
+  .player .seek-preview,
+  .source-badge,
+  .play-indicator svg,
+  .card-details {
+    backdrop-filter: none;
+  }
+
+  .modal-scrim {
+    background: #10182799;
+  }
+}
+
+@media (forced-colors: active) {
+  .navigation-bar nav,
+  .navigation-bar > .nav-item,
+  .global-search,
+  .modal,
+  .player-overlay > header,
+  .player-bottom,
+  .player .episode-panel,
+  .player .player-option-panel {
+    border: 1px solid CanvasText;
+    background: Canvas;
+    color: CanvasText;
+    box-shadow: none;
+    backdrop-filter: none;
+  }
+
+  button.active,
+  button.selected,
+  button[aria-pressed='true'],
+  input[role='switch']:checked {
+    border-color: Highlight;
+    background: Highlight;
+    color: HighlightText;
+  }
+}

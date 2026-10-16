@@ -1,0 +1,250 @@
+.modal-scrim {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  background: #10182724;
+  backdrop-filter: blur(2px);
+}
+
+.modal {
+  width: 560px;
+  max-width: 100%;
+  max-height: calc(100vh - 56px);
+  padding: 0 28px 28px;
+  overflow: auto;
+  border: 1px solid var(--glass-edge);
+  border-radius: var(--radius-lg);
+  background: var(--glass-solid);
+  box-shadow: var(--shadow-dialog);
+  scrollbar-width: thin;
+  scrollbar-color: var(--scrollbar) transparent;
+  scroll-padding-top: 90px;
+}
+
+[data-tv='true'] .modal {
+  scroll-padding-top: 100px;
+}
+
+.modal.wide {
+  width: 760px;
+}
+
+.modal-header {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 0 -28px 22px;
+  padding: 20px 28px 16px;
+  border-bottom: 1px solid var(--line);
+  background: var(--surface);
+}
+
+.modal-header h2 {
+  min-width: 0;
+  font-size: 22px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.modal-header .icon-button {
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.auth-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 20px 0;
+}
+
+.auth-option {
+  justify-content: flex-start;
+  gap: 14px;
+  padding: 16px;
+  text-align: left;
+}
+
+.auth-option > svg {
+  color: var(--accent);
+}
+
+.auth-copy {
+  min-width: 0;
+  flex: 1;
+}
+
+.auth-option b {
+  display: block;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.account-name {
+  color: var(--text);
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.auth-option small {
+  display: block;
+  margin-top: 5px;
+  color: var(--muted);
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.auth-option.selected {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+}
+
+.auth-state {
+  display: inline-flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+.qr-box {
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px;
+  border-radius: var(--radius-md);
+  background: var(--bg);
+}
+
+.qr-box img {
+  width: 215px;
+  max-width: 100%;
+  border-radius: 10px;
+}
+
+.qr-box p {
+  color: var(--muted);
+  font-size: 13px;
+  text-align: center;
+}
+
+.security-note {
+  display: flex;
+  align-items: flex-start;
+  gap: 9px;
+  margin: 22px 0 14px;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.7;
+}
+
+.security-note svg {
+  flex-shrink: 0;
+}
+
+.notice,
+.error-message {
+  margin: 16px 0;
+  padding: 13px 15px;
+  border-radius: var(--radius-sm);
+  font-size: 13px;
+  line-height: 1.75;
+  overflow-wrap: anywhere;
+}
+
+.notice {
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.error-message {
+  background: var(--danger-bg);
+  color: var(--danger);
+}
+
+.url-form > label {
+  display: block;
+  margin: 20px 0 12px;
+  font-size: 14px;
+}
+
+.url-form input {
+  display: block;
+  width: 100%;
+  margin-top: 8px;
+}
+
+.url-form > .primary {
+  width: 100%;
+  margin-top: 20px;
+}
+
+.search-dialog form {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.search-dialog form input {
+  min-width: 0;
+  flex: 1;
+}
+
+.search-dialog > .chips {
+  margin-top: 18px;
+}
+
+.toast,
+.working-pill {
+  position: fixed;
+  bottom: 76px;
+  left: 50%;
+  z-index: 60;
+  max-width: 85vw;
+  padding: 13px 22px;
+  border: 1px solid #ffffff24;
+  border-radius: var(--radius-md);
+  background: #202c43f5;
+  color: #fff;
+  box-shadow: 0 8px 24px #17243d26;
+  font-size: 14px;
+  text-align: center;
+  overflow-wrap: anywhere;
+  transform: translateX(-50%);
+}
+
+.working-pill > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.working-pill button {
+  min-height: 32px;
+  padding: 4px 10px;
+  border-color: var(--accent-border);
+  background: transparent;
+  color: inherit;
+}
+
+.working-pill {
+  top: 18px;
+  bottom: auto;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border-color: var(--accent-border);
+  background: var(--surface);
+  color: var(--accent);
+  font-size: 13px;
+}

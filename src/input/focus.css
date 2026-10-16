@@ -1,0 +1,136 @@
+/* Programmatic controller focus needs an explicit visible outline. */
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) :is(button, input, select, textarea, a[href], [tabindex]):focus {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+  box-shadow: none;
+  z-index: 2;
+}
+
+[data-focus-retain][aria-disabled='true']:focus-visible,
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) [data-focus-retain][aria-disabled='true']:focus {
+  opacity: 1;
+}
+
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .media-card:focus {
+  transform: translateY(-2px);
+}
+
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .media-card:focus .play-indicator,
+.media-card-wrap:focus-within .card-details {
+  opacity: 1;
+}
+
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .global-search:has(input:focus) {
+  outline: 2px solid var(--focus);
+  outline-offset: 3px;
+}
+
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .global-search input:focus {
+  outline: none;
+}
+
+.player {
+  --focus: #f3f6fa;
+}
+
+.controller-focus-hint {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 0;
+  width: 100%;
+  color: var(--muted);
+  font-size: 12px;
+  line-height: 1.6;
+}
+
+
+.controller-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 16px;
+}
+
+.controller-actions > span {
+  white-space: nowrap;
+}
+
+.controller-actions kbd {
+  display: inline-block;
+  min-width: 24px;
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  color: inherit;
+  font: inherit;
+  text-align: center;
+}
+
+.controller-focus-hint[hidden],
+.player:not(.controls-visible) .player-overlay .controller-focus-hint,
+[data-input-hints-host]:empty,
+[data-input-hints-host]:has(> .controller-focus-hint[hidden]) {
+  display: none;
+}
+
+.modal-input-hints {
+  position: sticky;
+  bottom: -28px;
+  z-index: 5;
+  margin: 24px -28px -28px;
+  padding: 12px 28px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+  font-size: 12px;
+  line-height: 1.6;
+  min-height: calc(3.2em + 39px);
+}
+
+.modal-input-hints:empty,
+.modal-input-hints:has(> .controller-focus-hint[hidden]) {
+  display: block;
+}
+
+.modal-input-hints > .controller-focus-hint[hidden] {
+  display: flex;
+  visibility: hidden;
+}
+
+.modal {
+  scroll-padding-bottom: 100px;
+}
+
+.player .controller-focus-hint {
+  color: #effff6;
+}
+
+.player .controller-actions kbd {
+  color: #91f3c6;
+  border-color: #ffffff40;
+}
+
+.player-hints > [data-input-hints-host] {
+  min-width: 0;
+  flex: 1 1 100%;
+}
+
+html[data-tv='true'] .controller-focus-hint,
+html[data-tv='true'] .modal-input-hints {
+  font-size: 14px;
+}
+
+@media (max-width: 640px) {
+  .modal-input-hints {
+    bottom: -20px;
+    margin-right: -20px;
+    margin-left: -20px;
+    margin-bottom: -20px;
+    padding-right: 20px;
+    padding-left: 20px;
+  }
+}
+
+html:is([data-input-mode='gamepad'], [data-input-mode='remote']) .card-details {
+  visibility: hidden;
+  pointer-events: none;
+}

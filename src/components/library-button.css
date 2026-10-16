@@ -1,0 +1,15 @@
+.library-button-content {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+/* Keep the focus stroke clear while only the waiting action label is subdued. */
+.library-button[aria-disabled='true']:not(:disabled) {
+  opacity: 1;
+}
+
+.library-button[aria-disabled='true'] > .library-button-content {
+  opacity: 0.5;
+}

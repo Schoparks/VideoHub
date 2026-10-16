@@ -1,0 +1,76 @@
+/* Scoped fallbacks for CSS layout primitives introduced after Chromium 66. */
+html[data-legacy-webview='true'] .cover,
+html[data-legacy-webview='true'] .detail-visual {
+  height: 0;
+  padding-bottom: 56.25%;
+}
+
+html[data-legacy-webview='true'] .cover > img,
+html[data-legacy-webview='true'] .cover > .image-fallback,
+html[data-legacy-webview='true'] .detail-visual > img,
+html[data-legacy-webview='true'] .detail-visual > .image-fallback {
+  position: absolute;
+  top: 0;
+  left: 0;
+}
+
+html[data-legacy-webview='true'] .dynamic-text {
+  max-height: 65vh;
+}
+
+html[data-legacy-webview='true'] .settings-heading > * + *,
+html[data-legacy-webview='true'] .brand > * + * {
+  margin-left: 10px;
+}
+
+html[data-legacy-webview='true'] button > svg {
+  margin-right: 8px;
+}
+
+html[data-legacy-webview='true'] .icon-button > svg {
+  margin-right: 0;
+}
+
+html[data-legacy-webview='true'] .navigation-bar {
+  margin-top: 14px;
+}
+
+html[data-legacy-webview='true'] .navigation-bar > * + * {
+  margin-left: 20px;
+}
+
+html[data-legacy-webview='true'] .navigation-bar nav > * + * {
+  margin-left: 4px;
+}
+
+html[data-legacy-webview='true'] .player-buttons > * + *,
+html[data-legacy-webview='true'] .controller-actions > * + *,
+html[data-legacy-webview='true'] .detail-actions > * + * {
+  margin-left: 16px;
+}
+
+html[data-legacy-webview='true'] .keyboard-row > * + *,
+html[data-legacy-webview='true'] .keyboard-toolbar > * + *,
+html[data-legacy-webview='true'] .candidate-pages > * + * {
+  margin-left: 5px;
+}
+
+html[data-legacy-webview='true'] .keyboard-keys > * + * {
+  margin-top: 7px;
+}
+
+html[data-legacy-webview='true'] .screen-keyboard > * + *,
+html[data-legacy-webview='true'] .auth-options > * + *,
+html[data-legacy-webview='true'] .episode-list > * + *,
+html[data-legacy-webview='true'] .player-option-list > * + * {
+  margin-top: 12px;
+}
+
+html[data-legacy-webview='true'] .modal .setting-row {
+  background: var(--surface);
+}
+
+html[data-legacy-webview='true'] .global-search {
+  width: 420px;
+  max-width: 100%;
+}

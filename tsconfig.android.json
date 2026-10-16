@@ -1,0 +1,4 @@
+{
+  "extends": "./tsconfig.json",
+  "include": ["android/backend", "src/shared", "src/android"]
+}

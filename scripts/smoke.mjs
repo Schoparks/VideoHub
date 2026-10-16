@@ -1,0 +1,96 @@
+import { _electron as electron } from 'playwright';
+import { mkdir, writeFile, readFile, mkdtemp } from 'node:fs/promises';
+import { createServer } from 'node:http';
+import { resolve } from 'node:path';
+import assert from 'node:assert/strict';
+const root=resolve('.');
+await mkdir('.tmp/smoke',{recursive:true});
+const profile=await mkdtemp(resolve('.tmp/smoke/profile-'));
+const env={...process.env,YINGJI_TEST_DATA:profile};delete env.ELECTRON_RUN_AS_NODE;delete env.VITE_DEV_SERVER_URL;
+let devServer;
+if(process.env.YINGJI_DEV_TEST==='1'){const {createServer}=await import('vite');devServer=await createServer();await devServer.listen();env.VITE_DEV_SERVER_URL='http://127.0.0.1:5173';}
+const application=await electron.launch({...(process.env.YINGJI_EXECUTABLE?{executablePath:resolve(process.env.YINGJI_EXECUTABLE),args:[]}:{args:['.']}),cwd:root,env,timeout:30000});
+application.process().stderr.on('data', data => process.stderr.write(data));
+application.process().stdout.on('data', data => process.stdout.write(data));
+const errors=[];
+let mediaServer;
+try {
+  const page=await application.firstWindow();
+  page.setDefaultTimeout(15000);
+  page.on('pageerror',e=>{errors.push(e.message);console.error('Renderer:',e.message);});
+  await page.getByRole('heading',{name:'首页'}).waitFor();
+  assert.equal(await page.evaluate(()=>typeof window.hub?.bootstrap),'function');
+  assert.equal(await page.evaluate(()=>typeof window.require),'undefined');
+  const boot=await page.evaluate(()=>window.hub.bootstrap());assert.equal(boot.preview,undefined);
+  await page.screenshot({path:'.tmp/smoke/home.png',fullPage:true});
+  await page.getByRole('button',{name:'打开链接',exact:true}).click();
+  await page.getByRole('textbox',{name:'视频地址'}).fill('file:///secret');
+  await page.getByRole('button',{name:'打开视频',exact:true}).click();
+  await page.getByRole('status').filter({hasText:'仅支持'}).waitFor();
+  await page.keyboard.press('Escape');
+  // Generate a small, original VP8 sample to exercise actual decoding and local file transport.
+  const sample=await page.evaluate(async()=>{
+    const canvas=document.createElement('canvas');canvas.width=320;canvas.height=180;const context=canvas.getContext('2d');
+    const stream=canvas.captureStream(12);const recorder=new MediaRecorder(stream,{mimeType:'video/webm;codecs=vp8'});const chunks=[];
+    recorder.ondataavailable=event=>chunks.push(event.data);
+    const ended=new Promise(resolve=>recorder.onstop=resolve);recorder.start();
+    const start=performance.now();const timer=setInterval(()=>{context.fillStyle='#3e7560';context.fillRect(0,0,320,180);context.fillStyle='#dceadc';context.font='24px sans-serif';context.fillText('YINGJI playback test',30,85);context.fillRect(20+((performance.now()-start)/30)%260,120,20,10);},80);
+    await new Promise(resolve=>setTimeout(resolve,3600));recorder.stop();await ended;clearInterval(timer);stream.getTracks().forEach(track=>track.stop());
+    return Array.from(new Uint8Array(await new Blob(chunks,{type:'video/webm'}).arrayBuffer()));
+  });
+  const samplePath=resolve('.tmp/smoke/跨平台样片.webm');await writeFile(samplePath,Buffer.from(sample));
+  await application.evaluate(({dialog},path)=>{dialog.showOpenDialog=async()=>({canceled:false,filePaths:[path]});},samplePath);
+  await page.getByRole('button',{name:'打开文件',exact:true}).click();
+  await page.getByRole('button').filter({hasText:'跨平台样片'}).click();
+  await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.currentTime>.5&&v.videoWidth===320;});
+  await page.keyboard.press('Space');
+  assert.equal(await page.locator('video').evaluate(v=>v.paused),true);
+  await page.evaluate(()=>{window.testPad={id:'Simulated Xbox 360',mapping:'standard',axes:[0,0],buttons:Array.from({length:16},()=>({pressed:false,value:0}))};Object.defineProperty(navigator,'getGamepads',{configurable:true,value:()=>[window.testPad]});window.testPad.buttons[9].pressed=true;});
+  await page.waitForFunction(()=>document.querySelector('video')?.paused===false);
+  await page.evaluate(async()=>{window.testPad.buttons[9].pressed=false;await new Promise(resolve=>requestAnimationFrame(()=>requestAnimationFrame(resolve)));window.testPad.buttons[9].pressed=true;});
+  await page.waitForFunction(()=>document.querySelector('video')?.paused===true);
+  await page.evaluate(()=>{delete navigator.getGamepads;delete window.testPad;});
+  await page.screenshot({path:'.tmp/smoke/player.png'});
+  await page.getByRole('button',{name:'退出播放',exact:true}).click();
+  await page.waitForFunction(()=>!document.querySelector('video'));
+  await page.waitForFunction(()=>document.activeElement?.getAttribute('data-media-id')?.startsWith('local:'));
+  const progress=await page.evaluate(()=>window.hub.bootstrap());assert.ok(progress.history[0].position>.5);
+  // URL playback uses a fixture HTTP origin; the app's own media gateway is still exercised.
+  mediaServer=createServer((_req,res)=>{res.writeHead(200,{'Content-Type':'video/webm'});res.end(Buffer.from(sample));});
+  await new Promise(resolve=>mediaServer.listen(0,'127.0.0.1',resolve));
+  await page.getByRole('button',{name:'打开链接',exact:true}).click();
+  await page.getByRole('textbox',{name:'视频地址'}).fill(`http://127.0.0.1:${mediaServer.address().port}/fixture.webm`);
+  await page.getByRole('button',{name:'打开视频',exact:true}).click();
+  await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.currentTime>.3&&v.videoWidth===320;});
+  await page.getByRole('button',{name:'退出播放',exact:true}).click();
+  await page.waitForFunction(()=>!document.querySelector('video'));
+  if(process.env.YINGJI_LIVE_TEST==='1'){
+    await page.getByRole('button',{name:'打开链接',exact:true}).click();
+    await page.getByRole('textbox',{name:'视频地址'}).fill('BV17x411w7KC');
+    await page.getByRole('button',{name:'打开视频',exact:true}).click();
+    await page.waitForFunction(()=>{const v=document.querySelector('video');return v&&v.currentTime>1&&v.videoWidth>0;},{},{timeout:45000});
+    await page.getByRole('button',{name:'退出播放',exact:true}).click();
+  }
+  assert.equal(await page.getByRole('dialog').count(),0);
+  await page.getByRole('button',{name:'管理 B 站账号'}).click();
+  await page.getByRole('dialog',{name:'连接 B 站'}).waitFor();
+  assert.equal(await page.getByRole('button',{name:/App 推荐授权/}).count(),1);
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'设置',exact:true}).click();
+  await page.getByLabel('深色外观').check();
+  assert.equal(await page.locator('html').getAttribute('data-theme'),'dark');
+  await page.keyboard.press('Escape');
+  await page.getByRole('button',{name:'本地片库',exact:true}).click();
+  await page.getByRole('button').filter({hasText:'跨平台样片'}).waitFor();
+  await page.getByRole('button',{name:'我的收藏',exact:true}).click();
+  await page.getByRole('button',{name:'播放队列',exact:true}).click();
+  await page.locator('main .empty-state').waitFor();
+  await page.keyboard.press('y');
+  await page.getByRole('dialog',{name:'搜索'}).waitFor();
+  await page.getByRole('button',{name:'纪录片',exact:true}).click();
+  assert.equal(await page.getByRole('textbox',{name:'搜索关键词'}).inputValue(),'纪录片');
+  await page.keyboard.press('Escape');
+  await page.evaluate(async()=>{const a=await window.hub.bootstrap();await window.hub.preferences({...a.preferences,theme:'light'});});
+  assert.deepEqual(errors,[]);
+  console.log(JSON.stringify({result:'passed',platform:boot.platform,packaged:!!process.env.YINGJI_EXECUTABLE,checks:['real preload bridge','renderer isolation','unsafe URL rejection','modal return','dual authorization UI','theme persistence','library and queue routes','controller search keyboard','simulated Xbox Start playback actions','return to original card focus','real local VP8 decoding','progress persistence','real HTTP URL decoding',...(process.env.YINGJI_LIVE_TEST==='1'?['anonymous Bilibili DASH decoding']:[])],errors},null,2));
+} finally {await application.close();if(mediaServer)await new Promise(resolve=>mediaServer.close(resolve));if(devServer)await devServer.close();}
