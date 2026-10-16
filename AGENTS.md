@@ -6,6 +6,7 @@
 
 - 映集（VideoHub）是面向「电脑接电视 + 手柄」的桌面聚合播放器，采用 Electron、React、TypeScript，优先支持 B 站、本地媒体、HTTP(S) 媒体直链及视频网页。
 - 使用 Node.js 22.12+（推荐 24）、pnpm 11 和 TypeScript 严格检查；命令以 [package.json](package.json) 为准。
+- CI 的 pnpm 版本统一读取 `package.json` 的 `packageManager`，不在 `pnpm/action-setup` 中重复声明版本；修改工作流后须核对对应提交的三个系统检查结果。
 - 产品文案使用简体中文。交互同时支持手柄、键盘、鼠标；新增控件必须可聚焦、可确认、可返回，并有清晰的当前焦点提示。
 - 当前体验优化以电视全屏和正常桌面窗口为目标，验收使用 1920×1080 与 1440×950；按用户要求，不把窄窗口适配作为本阶段优化目标。
 - 使用跨平台路径与 Electron 系统目录，不写死开发机盘符、用户目录或 Windows 专属行为。
