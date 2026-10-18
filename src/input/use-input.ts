@@ -5,6 +5,8 @@ import { activeFocusScope, ensureFocus, focusElement, FocusRecovery, moveFocus, 
 import { adjustRange, adjustSelect, scrollContent } from './controls';
 import { createInputHint } from './hints';
 import { remoteAction } from './remote';
+import { isControllerAction } from '../shared/remote-control';
+import { createSettingEditing } from './setting-editing';
 import './focus.css';
 
 export function useInput(preferences: Preferences, handler: (action: Action) => boolean | void) {
@@ -17,6 +19,7 @@ export function useInput(preferences: Preferences, handler: (action: Action) => 
     const interpreter = new GamepadInterpreter();
     const recovery = new FocusRecovery();
     const hint = createInputHint();
+    const settingEditing = createSettingEditing();
     let frame = 0, previousDevice = '', padIndex = -1, lastUpdate = 0;
     let standard = true, calibrating = false;
     const updateHint = () => hint.update(config.current, standard);
@@ -37,6 +40,7 @@ export function useInput(preferences: Preferences, handler: (action: Action) => 
         return;
       }
       if (gamepad && document.activeElement?.hasAttribute('data-gamepad-skip')) ensureFocus();
+      if (settingEditing.action(action)) { updateHint(); return; }
       // Active playback modes own actions before text scrolling or focus repair.
       if (callback.current(action)) {
         updateHint();
@@ -111,7 +115,8 @@ export function useInput(preferences: Preferences, handler: (action: Action) => 
       trapTab(event);
       const element = event.target as HTMLElement;
       const editing = element instanceof HTMLTextAreaElement || element instanceof HTMLInputElement && !['range', 'checkbox', 'radio'].includes(element.type);
-      if ((editing || element instanceof HTMLSelectElement) && event.key !== 'Escape') return;
+      const settingControl = !!element.closest('.settings') && element.matches('select, input[type="range"]');
+      if ((editing || element instanceof HTMLSelectElement && !settingControl) && event.key !== 'Escape') return;
       const map: Record<string, Action> = {
         ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'confirm',
         Escape: 'back', ContextMenu: 'menu', ' ': 'pause', PageUp: 'previous', PageDown: 'next', x: 'details', y: 'search', '[': 'rewind', ']': 'forward',
@@ -136,6 +141,13 @@ export function useInput(preferences: Preferences, handler: (action: Action) => 
       act(action, true);
     };
     const pointerMove = (event: PointerEvent) => { if (event.movementX || event.movementY) pointer(); };
+    const controller = (event: Event) => {
+      const action: unknown = (event as CustomEvent).detail;
+      if (!isControllerAction(action) || document.hidden) return;
+      event.preventDefault();
+      activate(window.hubPlatform === 'android' ? 'remote' : 'gamepad');
+      act(action, true);
+    };
     const suspend = () => {
       interpreter.blockUntilNeutral();
       updateHint();
@@ -146,6 +158,7 @@ export function useInput(preferences: Preferences, handler: (action: Action) => 
     };
     window.addEventListener('keydown', keyboard);
     window.addEventListener('hub-remote', remote);
+    window.addEventListener('hub-controller-action', controller);
     if (window.hubPlatform === 'android') { activate('remote'); recovery.repair(); }
     window.addEventListener('blur', suspend);
     window.addEventListener('focus', suspend);
@@ -158,6 +171,7 @@ export function useInput(preferences: Preferences, handler: (action: Action) => 
       cancelAnimationFrame(frame);
       window.removeEventListener('keydown', keyboard);
       window.removeEventListener('hub-remote', remote);
+      window.removeEventListener('hub-controller-action', controller);
       window.removeEventListener('blur', suspend);
       window.removeEventListener('focus', suspend);
       document.removeEventListener('visibilitychange', suspend);
@@ -166,6 +180,7 @@ export function useInput(preferences: Preferences, handler: (action: Action) => 
       document.removeEventListener('focusin', focused);
       document.removeEventListener('change', updateHint);
       hint.remove();
+      settingEditing.destroy();
     };
   }, []);
   return device;

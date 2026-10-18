@@ -1,0 +1,38 @@
+/* Text backings hug content; the hint host keeps its existing two-line capacity. */
+.player .timecode,
+.player .playing-badge,
+.player .player-hints small {
+  background: #f3f6fca3;
+}
+
+.player .player-hints > [data-input-hints-host] {
+  padding: 0;
+  background: transparent;
+}
+
+.player .player-hints .controller-focus-hint {
+  width: max-content;
+  max-width: 100%;
+  padding: 3px 8px;
+  border-radius: 12px;
+  background: #f3f6fca3;
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more) {
+  .player .timecode,
+  .player .playing-badge,
+  .player .player-hints small,
+  .player .player-hints .controller-focus-hint {
+    background: #f3f6fc;
+  }
+}
+
+@media (forced-colors: active) {
+  .player .timecode,
+  .player .playing-badge,
+  .player .player-hints small,
+  .player .player-hints .controller-focus-hint {
+    background: Canvas;
+    color: CanvasText;
+  }
+}

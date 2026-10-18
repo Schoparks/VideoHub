@@ -25,6 +25,28 @@ html[data-legacy-webview='true'] .player .timeline:focus::-webkit-slider-thumb {
   outline-offset: 3px;
 }
 
+/* Old outlines ignore rounded corners; draw the same single neutral ring on the rim. */
+html[data-legacy-webview='true'][data-input-mode='remote'] button[data-glass-button]:focus,
+html[data-legacy-webview='true'][data-input-mode='gamepad'] button[data-glass-button]:focus,
+html[data-legacy-webview='true'][data-input-mode='keyboard'] button[data-glass-button]:focus {
+  outline: none;
+  z-index: 2;
+}
+
+html[data-legacy-webview='true'][data-input-mode='remote'] button[data-glass-button]:focus::before,
+html[data-legacy-webview='true'][data-input-mode='gamepad'] button[data-glass-button]:focus::before,
+html[data-legacy-webview='true'][data-input-mode='keyboard'] button[data-glass-button]:focus::before {
+  top: -5px;
+  right: -5px;
+  bottom: -5px;
+  left: -5px;
+  border: 2px solid var(--focus);
+  border-radius: inherit;
+  box-shadow: none;
+  opacity: 1;
+  transform: none;
+}
+
 html[data-legacy-webview='true'] .card-details {
   visibility: hidden;
   pointer-events: none;
@@ -57,8 +79,4 @@ html[data-legacy-webview='true'] .player .episode-panel > [data-input-hints-host
 html[data-legacy-webview='true'] .player [data-input-hints-host] > .controller-focus-hint[hidden] {
   display: flex;
   visibility: hidden;
-}
-
-html[data-legacy-webview='true'] .player-hints > [data-input-hints-host] {
-  background: #ffffff99;
 }

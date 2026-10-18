@@ -33,6 +33,9 @@ for (const tvMode of [false, true]) {
     await page.getByRole('button', { name: '重试', exact: true }).click();
     await page.getByRole('button', { name: '播放 可靠性测试', exact: true }).click();
     await page.getByRole('button', { name: '暂停', exact: true }).waitFor();
+    await page.getByRole('button', { name: tvMode ? '播放器全屏' : '退出播放器全屏', exact: true }).click();
+    await page.getByRole('button', { name: tvMode ? '退出播放器全屏' : '播放器全屏', exact: true }).waitFor();
+    await page.evaluate(() => { window.reliability.windowCalls = []; });
     await connectPad(page);
     await page.locator('video').evaluate(video => { video.currentTime = 37.25; });
     await page.evaluate(() => {
@@ -48,7 +51,7 @@ for (const tvMode of [false, true]) {
     await page.locator('.player[data-exiting="true"]').waitFor();
     await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === '退出播放');
     for (const name of ['播放设置', '显示弹幕', '播放队列', '播放速度', '清晰度', '选集，共 2 集', '下一集', '退出播放']) await click(name);
-    const fullscreenName = tvMode ? '播放器全屏' : '退出播放器全屏';
+    const fullscreenName = tvMode ? '退出播放器全屏' : '播放器全屏';
     await click(fullscreenName);
     for (const index of [0, 1, 2, 3, 4, 5, 6, 7, 9]) await pressPad(page, index);
     assert.equal(await page.getByRole('dialog').count(), 0);
@@ -75,12 +78,12 @@ for (const tvMode of [false, true]) {
     await page.waitForFunction(() => !!window.reliability.finishWindowRestore);
     await click(fullscreenName);
     await click('退出播放');
-    assert.deepEqual(await page.evaluate(() => window.reliability.windowCalls), [tvMode]);
+    assert.deepEqual(await page.evaluate(() => window.reliability.windowCalls), [!tvMode]);
     await page.evaluate(() => { window.reliability.holdWindowRestore = false; window.reliability.finishWindowRestore(); });
     await page.waitForFunction(() => !document.querySelector('.player'));
     await page.waitForFunction(() => document.activeElement?.matches('main .media-card'));
     assert.ok(await page.evaluate(() => window.reliability.progress.every(entry => entry.position === 37.25)));
-    assert.equal(await page.evaluate(() => window.reliability.windowFullscreen), tvMode);
+    assert.equal(await page.evaluate(() => window.reliability.windowFullscreen), !tvMode);
     checks.push(`${label}: save and window restoration finish once, retain the original progress and return to the card`);
 
     await page.getByRole('button', { name: '播放 可靠性测试', exact: true }).click();

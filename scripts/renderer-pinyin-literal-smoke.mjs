@@ -1,3 +1,4 @@
+import { openSearchKeyboard } from './search-test-entry.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -20,7 +21,7 @@ for (const tv of [false, true]) {
     for (const letter of text) await page.locator('.keyboard-keys').getByRole('button', { name: letter, exact: true }).click();
   };
   const open = async () => {
-    await page.getByRole('button', { name: '手柄屏幕键盘', exact: true }).click();
+    await openSearchKeyboard(page);
     await input.fill('');
   };
   const confirm = async name => {

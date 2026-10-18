@@ -7,6 +7,11 @@ export function remoteAction(value: unknown): Action | undefined {
 }
 
 export function remoteHints(scope: ParentNode, player: HTMLElement | null, focused: HTMLElement): [string, string][] {
+  if (focused?.closest('.settings') && focused.matches('select, input[type="range"]')) {
+    return focused.dataset.settingEditing
+      ? [['← →', '调整'], ['↑ ↓', '移动'], ['中键', '完成编辑'], ['返回', '结束编辑']]
+      : [['方向键', '移动'], ['中键', '编辑'], ['返回', '关闭']];
+  }
   const entries: [string, string][] = [['方向键', '移动']];
   const seeking = scope === player && player?.dataset.seeking === 'true';
   const range = focused instanceof HTMLInputElement && focused.type === 'range';

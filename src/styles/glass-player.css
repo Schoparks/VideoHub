@@ -128,10 +128,6 @@
   background: transparent;
 }
 
-.player .player-hints > [data-input-hints-host]:has(> .controller-focus-hint:not([hidden])) {
-  background: #ffffff99;
-}
-
 .player .player-hints small {
   grid-row: 1;
   margin-top: 3px;
@@ -190,7 +186,7 @@
   border-top-color: var(--accent);
 }
 
-@supports (backdrop-filter: blur(1px)) {
+@supports (backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px)) {
   .player-overlay > header,
   .player-bottom,
   .player .episode-panel,
@@ -200,6 +196,7 @@
     background-color: var(--glass-fill);
     background-image: linear-gradient(150deg, var(--glass-sheen), transparent 55%);
     backdrop-filter: var(--glass-optics, var(--glass-filter));
+    -webkit-backdrop-filter: var(--glass-optics, var(--glass-filter));
   }
 
   .player .episode-panel,

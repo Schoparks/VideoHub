@@ -1,9 +1,11 @@
-import { Monitor } from 'lucide-react';
+import { useId, useState } from 'react';
+import { Gamepad2, MessageSquare, Monitor, Smartphone } from 'lucide-react';
 import type { Preferences } from '../shared/types';
 import { GamepadSettings } from './GamepadSettings';
-import { PlaybackSettings } from './PlaybackSettings';
 import { DanmakuSettings } from './DanmakuSettings';
-import { CardLayoutSetting } from './CardLayoutSetting';
+import { PhoneControllerSetting } from './PhoneControllerSetting';
+import { ViewingSettings } from './ViewingSettings';
+import './settings-navigation.css';
 
 interface SettingsProps {
   value: Preferences;
@@ -12,44 +14,30 @@ interface SettingsProps {
 }
 
 export function Settings({ value, change, device }: SettingsProps) {
+  const [section, setSection] = useState('viewing');
+  const id = useId();
+  const sections = [
+    { key: 'viewing', label: '观看', icon: Monitor },
+    { key: 'danmaku', label: '弹幕', icon: MessageSquare },
+    { key: 'phone', label: '手机遥控', icon: Smartphone },
+    { key: 'gamepad', label: '手柄', icon: Gamepad2 },
+  ];
   return (
     <div className="settings">
-      <div className="settings-heading"><Monitor size={19} /><h3>观看体验</h3></div>
-      {window.hubPlatform !== 'android' && <label className="setting-row">
-        <span><b>电视模式</b><small>放大界面并进入全屏</small></span>
-        <input
-          type="checkbox"
-          role="switch"
-          aria-label="电视模式"
-          checked={value.tvMode}
-          onChange={e => change({ ...value, tvMode: e.target.checked })}
-        />
-      </label>}
-      <label className="setting-row">
-        <span><b>深色外观</b></span>
-        <input
-          type="checkbox"
-          role="switch"
-          aria-label="深色外观"
-          checked={value.theme === 'dark'}
-          onChange={e => change({ ...value, theme: e.target.checked ? 'dark' : 'light' })}
-        />
-      </label>
-      <CardLayoutSetting value={value} change={change} />
-      <PlaybackSettings value={value} change={change} />
-      <label className="setting-row">
-        <span><b>同步 B 站播放历史</b><small>同步至 B 站，本机进度始终保留</small></span>
-        <input
-          type="checkbox"
-          role="switch"
-          aria-label="同步 B 站播放历史"
-          checked={value.syncHistory}
-          onChange={e => change({ ...value, syncHistory: e.target.checked })}
-        />
-      </label>
-
-      <DanmakuSettings value={value} change={change} />
-      {(window.hubPlatform !== 'android' || !!device) && <GamepadSettings value={value} change={change} device={device} />}
+      <div className="settings-tabs" role="tablist" aria-label="设置分类">
+        {sections.map(({ key, label, icon: Icon }) => (
+          <button key={key} id={`${id}-${key}`} role="tab" aria-selected={section === key}
+            aria-controls={`${id}-panel`} onClick={() => setSection(key)}>
+            <Icon size={18} aria-hidden="true" /><span>{label}</span>
+          </button>
+        ))}
+      </div>
+      <div className="settings-panel" id={`${id}-panel`} role="tabpanel" aria-labelledby={`${id}-${section}`}>
+        {section === 'viewing' && <ViewingSettings value={value} change={change} />}
+        {section === 'danmaku' && <DanmakuSettings value={value} change={change} />}
+        {section === 'phone' && <PhoneControllerSetting />}
+        {section === 'gamepad' && <GamepadSettings value={value} change={change} device={device} />}
+      </div>
     </div>
   );
 }

@@ -5,6 +5,9 @@ import { actionKey } from './bindings';
 import { remoteHints } from './remote';
 
 function confirmLabel(element: HTMLElement, mode: string) {
+  if (element.closest('.settings') && element.matches('select, input[type="range"]')) {
+    return element.dataset.settingEditing ? '完成编辑' : '编辑';
+  }
   if (element.dataset.confirmLabel) return element.dataset.confirmLabel;
   if (element.getAttribute('aria-haspopup') === 'dialog') return '选择';
   if (element instanceof HTMLSelectElement && mode === 'gamepad') return '下一项';
@@ -46,6 +49,11 @@ export function createInputHint() {
       } else if (document.querySelector('[data-calibrating="true"]')) {
         entries.push(['短按', '目标键录入']);
         entries.push([`长按 ${key('back')}`, '取消'], ['Esc', '取消']);
+      } else if (focused?.closest('.settings') && focused.matches('select, input[type="range"]')) {
+        entries.push(['↑ ↓', '移动']);
+        if (focused.dataset.settingEditing) entries.push(['← →', '调整']);
+        add('confirm', confirmLabel(focused, mode));
+        add('back', focused.dataset.settingEditing ? '结束编辑' : '关闭');
       } else if (player?.dataset.seeking === 'true' && scope === player) {
         entries.push(['← →', '调整 10 秒']);
         add('confirm', '确认跳转');

@@ -62,11 +62,6 @@
   font-size: 16px;
 }
 
-[data-tv='true'] .global-search button {
-  width: 42px;
-  min-height: 42px;
-}
-
 [data-tv='true'] .url-form > label,
 [data-tv='true'] .url-form input {
   font-size: 17px;

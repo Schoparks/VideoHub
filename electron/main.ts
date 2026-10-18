@@ -15,13 +15,16 @@ import { schemas } from './ipc';
 import { createFullscreenControl } from './window-fullscreen';
 import type { HubApi } from '../src/shared/types';
 import { fetchCover } from './images';
+import { PhoneController } from './remote/controller';
 protocol.registerSchemesAsPrivileged([{ scheme: 'yingji', privileges: { standard: true, secure: true, supportFetchAPI: true, corsEnabled: true, stream: true } }]);
 if (process.env.YINGJI_TEST_DATA) app.setPath('userData', resolve(process.env.YINGJI_TEST_DATA));
 const hiddenTest = !!process.env.YINGJI_TEST_DATA && process.env.YINGJI_TEST_HIDDEN === '1';
 app.commandLine.appendSwitch('autoplay-policy', 'no-user-gesture-required');
 let window: BrowserWindow | null = null, playback: PlaybackSessions, gateway: MediaGateway;
 let quitting = false;
+let controller: PhoneController;
 async function main() {
+  controller = new PhoneController(join(__dirname, 'remote'), () => window);
   const fullscreen = createFullscreenControl(() => window, hiddenTest);
   const directory = app.getPath('userData'); await mkdir(directory, { recursive: true });
   const store = new Store(directory); await store.init();
@@ -53,6 +56,7 @@ async function main() {
     callback({ responseHeaders: { ...details.responseHeaders, 'Content-Security-Policy': [`default-src 'self'; script-src 'self'${dev ? " 'unsafe-inline'" : ''}; style-src 'self' 'unsafe-inline'; img-src 'self' yingji: data: https:; connect-src 'self' http://127.0.0.1:* ws://127.0.0.1:5173; media-src 'self' blob: http://127.0.0.1:*; worker-src 'self' blob:; object-src 'none'; base-uri 'none'; frame-src 'none'`] } });
   });
   const api: HubApi = {
+    controllerStatus: controller.status, controllerEnable: controller.setEnabled, controllerReply: controller.reply,
     bootstrap: async () => ({ account: account.status(), library: store.state.library, history: store.state.history, queue: store.state.queue, preferences: store.state.preferences, platform: process.platform, version: app.getVersion(), notice: store.notice }),
     browse: request => bili.browse(request), folders: () => bili.folders(),
     detail: async item => item.source === 'bilibili' ? bili.detail(item) : { item, parts: [], description: item.source === 'local' ? item.path || '' : item.url || '' },
@@ -111,11 +115,19 @@ async function main() {
     window.on('leave-full-screen', stateChanged);
     window.webContents.setWindowOpenHandler(() => ({ action: 'deny' }));
     window.webContents.on('will-navigate', (event, url) => { if (!trusted(url)) event.preventDefault(); });
-    window.on('closed', () => { window = null; });
+    window.on('closed', () => { void controller.stop(); window = null; });
+    window.webContents.on('render-process-gone', () => { void controller.stop(); });
+    window.webContents.on('did-finish-load', () => { void controller.status().catch(() => {}); });
     void window.loadURL(rendererUrl);
   };
   createWindow();
   powerMonitor.on('suspend', () => { window?.webContents.send('system:suspend'); });
+  powerMonitor.on('suspend', () => { void controller.cancelPending(); });
+  powerMonitor.on('resume', () => { void controller.status().catch(() => {}); });
+  const controllerRefresh = setInterval(() => {
+    if (window && !quitting) void controller.status().catch(() => {});
+  }, 5000);
+  controllerRefresh.unref();
   app.on('activate', () => { if (!window) createWindow(); });
 }
 if (!app.requestSingleInstanceLock()) app.quit();
@@ -132,6 +144,7 @@ app.on('before-quit', event => {
   if (quitting || !playback) return;
   event.preventDefault();
   quitting = true;
+  void controller?.stop();
   void cancelWebMediaResolution().then(() => playback.close()).catch(() => {})
     .then(() => gateway.stop()).finally(() => app.quit());
 });

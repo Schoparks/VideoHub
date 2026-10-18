@@ -17,6 +17,7 @@ import { Store } from './store';
 import { MediaGateway } from './gateway';
 import { LocalLibrary } from './library';
 import { androidVideoSupport } from './video-support';
+import { controllerApi } from './controller';
 
 installFetch();
 const vault = new Vault();
@@ -60,6 +61,7 @@ const official = (item: MediaItem) => item.source === 'bilibili'
         : `https://www.bilibili.com/video/${item.bvid || `av${item.aid}`}` : item.url;
 
 const api: Omit<HubApi, 'onSuspend' | 'onFullscreen'> = {
+  ...controllerApi,
   bootstrap: async () => {
     await initialized;
     return { ...store.state, account: account.status(), platform: 'android', version: __YINGJI_ANDROID_VERSION__, notice: store.notice };
@@ -77,7 +79,7 @@ const api: Omit<HubApi, 'onSuspend' | 'onFullscreen'> = {
   danmaku: id => sessions.danmaku(id),
   watchLater: (item, add) => bili.watchLater(item, add), favorite: (item, folder, add) => bili.favorite(item, folder, add),
   queue: items => store.update(state => ({ ...state, queue: items })),
-  preferences: value => store.update(state => ({ ...state, preferences: { ...value, tvMode: true } })),
+  preferences: value => store.update(state => ({ ...state, preferences: value })),
   fullscreen: async () => {}, getFullscreen: async () => true,
   openOfficial: async item => {
     const url = official(item);

@@ -140,7 +140,8 @@ try {
     });
     assert.ok(search?.kind === 'season', '搜索结果未找到指定电影');
     report.searchIdentity = { kind: search.kind, seasonId: search.seasonId, episodeId: search.episodeId };
-    await page.getByRole('button', { name: '手柄屏幕键盘', exact: true }).evaluate(button => button.click());
+    await page.getByRole('textbox', { name: '搜索视频', exact: true })
+      .evaluate(input => input.dispatchEvent(new CustomEvent('gamepad-edit', { bubbles: true })));
     for (const [spelling, word] of [['xingfu', '幸福'], ['zhongdian', '终点'], ['zhan', '站']]) {
       for (const letter of spelling) {
         await page.locator('.keyboard-keys').getByRole('button', { name: letter, exact: true })

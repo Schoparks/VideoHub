@@ -23,6 +23,7 @@ import { Player, type PlayerHandle } from './components/Player';
 import { PlaybackPreparation } from './components/PlaybackPreparation';
 import { LibraryFeedback } from './components/LibraryFeedback';
 import { GlassOptics } from './components/GlassOptics';
+import { usePhoneController } from './hooks/usePhoneController';
 
 export default function App() {
   const preferencePending = useRef<() => boolean>(() => false);
@@ -67,7 +68,7 @@ export default function App() {
     document.documentElement.style.setProperty('--card-columns', String(boot.preferences.cardColumns || 0));
   }, [boot.preferences]);
 
-  const { source, opening, play, closePlayer, next, nextKind, cancelOpening, cancelPending, canCancelOpening } = usePlayback({
+  const { source, opening, play, openPlayback, closePlayer, next, nextKind, cancelOpening, cancelPending, canCancelOpening } = usePlayback({
     dialog,
     closeDialog: () => setDialog(null),
     queue: boot.queue,
@@ -164,6 +165,15 @@ export default function App() {
     navigate('search');
     setDialog(null);
   };
+  usePhoneController({
+    blocked: !ready || !!source || !!dialog || !!entry,
+    opening,
+    search,
+    open: async value => {
+      const result = await openPlayback(() => api.openUrl(value));
+      return result === 'opened' ? {} : { error: result };
+    },
+  });
   const queue = (
     <QueueList items={boot.queue} busy={queueActions.busy} play={item => void play(item)} update={items => void queueActions.update(items)} />
   );

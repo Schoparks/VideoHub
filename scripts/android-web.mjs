@@ -4,6 +4,7 @@ import { mkdir, copyFile, writeFile, readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { bundleAndroidLicenses } from './android-licenses.mjs';
 import { androidCssCompatibility } from './android-css-compatibility.mjs';
+import { buildRemote } from './build-remote.mjs';
 
 const output = resolve('.tmp/android-build/assets/web');
 const manifest = await readFile('android/AndroidManifest.xml', 'utf8');
@@ -14,6 +15,7 @@ await viteBuild({
   build: { outDir: output, emptyOutDir: true, sourcemap: false, target: 'chrome66', cssTarget: 'chrome66' },
 });
 await mkdir(`${output}/backend`, { recursive: true });
+await buildRemote(`${output}/remote`);
 const aliases = new Map([
   [resolve('electron/accounts/vault.ts'), resolve('android/backend/vault.ts')],
   [resolve('electron/storage/store.ts'), resolve('android/backend/store.ts')],

@@ -1,3 +1,4 @@
+import { openSearchKeyboard } from './search-test-entry.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -28,6 +29,7 @@ try {
   await page.getByRole('button', { name: '播放 可靠性测试', exact: true }).click();
   await page.waitForFunction(() => !!document.querySelector('video') && !document.querySelector('video').paused);
   await page.getByRole('button', { name: '播放设置', exact: true }).click();
+  await page.getByRole('tab', { name: '弹幕', exact: true }).click();
   const danmaku = page.getByRole('switch', { name: '显示 B 站视频弹幕', exact: true });
   await space(danmaku);
   assert.equal(await danmaku.isChecked(), true);
@@ -91,7 +93,7 @@ try {
   await page.waitForFunction(() => !document.querySelector('.player'));
   checks.push('Space operates queue actions while preserving the background playback session');
 
-  await page.getByRole('button', { name: '手柄屏幕键盘', exact: true }).click();
+  await openSearchKeyboard(page);
   const keyword = page.getByRole('textbox', { name: '搜索关键词', exact: true });
   await keyword.fill('测试');
   await page.keyboard.press('End');
@@ -103,6 +105,7 @@ try {
   checks.push('text entry keeps native spaces; Space activates the search submit button');
 
   await page.getByRole('button', { name: '设置', exact: true }).click();
+  await page.getByRole('tab', { name: '手柄', exact: true }).click();
   const binding = page.locator('.bindings button').first();
   await binding.click();
   await page.locator('[data-calibrating="true"]').waitFor();

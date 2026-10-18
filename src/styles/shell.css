@@ -32,7 +32,7 @@
   gap: 10px;
   width: min(350px, 42vw);
   height: 42px;
-  padding: 0 5px 0 14px;
+  padding: 0 14px;
   border: 1px solid var(--line);
   border-radius: 999px;
   background: var(--glass-solid);
@@ -55,27 +55,6 @@
   background: none;
   font-size: 13px;
   outline: none;
-}
-
-.global-search button {
-  width: 36px;
-  min-height: 36px;
-  flex-shrink: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-}
-
-.global-search kbd {
-  display: grid;
-  place-items: center;
-  width: 22px;
-  height: 22px;
-  border: 1px solid var(--line-strong);
-  border-radius: 5px;
-  color: var(--muted);
-  font: inherit;
-  font-size: 11px;
 }
 
 .tv-button {

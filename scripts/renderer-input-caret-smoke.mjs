@@ -1,3 +1,4 @@
+import { openSearchKeyboard } from './search-test-entry.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -11,7 +12,7 @@ const checks = [];
 
 try {
   await page.getByRole('button', { name: '重试', exact: true }).click();
-  await page.getByRole('button', { name: '手柄屏幕键盘', exact: true }).click();
+  await openSearchKeyboard(page);
   await page.getByRole('button', { name: '切换中英文', exact: true }).click();
   const input = page.getByRole('textbox', { name: '搜索关键词', exact: true });
   await input.fill('abc');
@@ -52,7 +53,7 @@ try {
   assert.equal(await input.evaluate(input => input.selectionStart), 1);
   await page.keyboard.press('Escape');
   await page.getByRole('dialog').waitFor({ state: 'detached' });
-  await page.getByRole('button', { name: '手柄屏幕键盘', exact: true }).click();
+  await openSearchKeyboard(page);
   assert.equal(await input.inputValue(), '');
   checks.push('selection deletion restores the caret at its start; canceled drafts do not change the original search');
   assert.deepEqual(errors, []);

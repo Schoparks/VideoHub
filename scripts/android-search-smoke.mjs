@@ -66,8 +66,6 @@ try {
     await key(22);
     assert.equal((await active()).search, true);
     await key(22);
-    assert.equal((await active()).label, '手柄屏幕键盘');
-    await key(22);
     assert.equal((await active()).label, '管理 B 站账号');
     await page.evaluate(() => [...document.querySelectorAll('.navigation-bar nav button')]
       .find(node => node.getAttribute('aria-label') === '哔哩哔哩').click());

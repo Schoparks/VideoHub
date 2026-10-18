@@ -41,12 +41,10 @@ for (const tv of [false, true]) {
     const search = page.getByRole('textbox', { name: '搜索视频', exact: true });
     assert.equal(await focused(search), true);
     await pressPad(page, 15);
-    assert.equal(await focused(button('手柄屏幕键盘')), true);
-    await pressPad(page, 15);
     assert.equal(await focused(button('切换电视模式')), true);
     await pressPad(page, 15);
     assert.equal(await focused(button('管理 B 站账号')), true);
-    for (let index = 0; index < 4; index++) await pressPad(page, 14);
+    for (let index = 0; index < 3; index++) await pressPad(page, 14);
     assert.equal(await focused(button('设置')), true);
     await pressPad(page, 15);
     await pressPad(page, 0);
@@ -59,7 +57,7 @@ for (const tv of [false, true]) {
     await pressPad(page, 5);
     assert.equal(await focused(search), true);
     assert.equal(await page.getByRole('dialog').count(), 0);
-    checks.push(`${mode}: full header crosses search, screen keyboard, TV and account controls in both directions`);
+    checks.push(`${mode}: full header crosses the single search entry, TV and account controls in both directions`);
 
     await button('哔哩哔哩').click();
     await button('分区浏览').click();

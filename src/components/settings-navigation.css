@@ -1,0 +1,42 @@
+.settings-tabs {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.settings-tabs button {
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  background: transparent;
+}
+
+.settings-tabs [aria-selected='true'] {
+  border-color: var(--accent-border);
+  background: var(--accent-soft);
+  color: var(--accent);
+}
+
+.settings-panel {
+  min-height: 470px;
+}
+
+.settings-panel .setting-row {
+  min-height: 68px;
+  padding-top: 12px;
+  padding-bottom: 12px;
+}
+
+.settings-panel .bindings {
+  margin: 14px 0;
+}
+
+.settings-panel .bindings button {
+  min-height: 44px;
+  padding: 10px 12px;
+}
+
+.settings-panel .device-status {
+  margin: 0 0 12px;
+}

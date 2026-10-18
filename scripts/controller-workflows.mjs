@@ -53,6 +53,7 @@ try {
   await press(0, 900);
   assert.equal(await page.getByRole('switch', { name: '深色外观', exact: true }).isChecked(), true);
   assert.match(await page.locator('.controller-focus-hint').innerText(), /已开启/);
+  await page.getByRole('tab', { name: '手柄', exact: true }).click();
   const binding = page.locator('.bindings button').filter({ hasText: /^确认/ });
   await binding.focus(); await press(0);
   await page.waitForFunction(() => !!document.querySelector('[data-calibrating="true"]'));

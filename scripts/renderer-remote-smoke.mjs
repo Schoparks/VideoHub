@@ -38,7 +38,7 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1440, height: 95
     await page.waitForFunction(() => document.querySelector('video')?.paused === false);
     assert.equal(await page.locator('.player-overlay h2').evaluate(node => node.tabIndex), -1);
     assert.equal(await page.locator('.player-overlay header p').evaluate(node => node.tabIndex), -1);
-    assert.equal(await page.getByRole('button', { name: '退出播放器全屏', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('button', { name: '退出播放器全屏', exact: true }).isDisabled(), true);
     await remote('back');
     await page.waitForFunction(() => document.querySelector('.player:not(.controls-visible)'));
     await remote('right');
@@ -55,14 +55,18 @@ for (const viewport of [{ width: 1920, height: 1080 }, { width: 1440, height: 95
     await page.waitForFunction(() => document.activeElement?.getAttribute('aria-label') === '播放设置');
     await remote('confirm');
     await page.getByRole('dialog').waitFor();
-    assert.equal(await page.getByRole('switch', { name: '电视模式', exact: true }).count(), 0);
+    assert.equal(await page.getByRole('switch', { name: '电视模式', exact: true }).count(), 1);
     assert.equal(await page.getByRole('slider', { name: '摇杆死区', exact: true }).count(), 0);
     const select = page.getByRole('combobox', { name: '播完后', exact: true });
     await select.focus();
     await remote('left');
+    assert.equal(await select.inputValue(), 'pause');
+    await remote('confirm');
+    await remote('left');
     assert.equal(await select.inputValue(), 'next');
     await remote('right');
     assert.equal(await select.inputValue(), 'pause');
+    await remote('confirm');
     await remote('back');
     await remote('back');
     await remote('back');

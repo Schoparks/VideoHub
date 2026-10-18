@@ -1,4 +1,5 @@
 import type { VideoCapability, VideoCodec } from './video-capability';
+import type { ControllerReply, ControllerRequest, ControllerStatus } from './remote-control';
 
 export type Source = 'bilibili' | 'local' | 'url';
 export interface MediaItem {
@@ -51,6 +52,10 @@ export const defaultPreferences: Preferences = {
 };
 export interface Bootstrap { account: AccountStatus; library: MediaItem[]; history: HistoryEntry[]; queue: MediaItem[]; preferences: Preferences; version: string; platform: string; preview?: boolean; notice?: string }
 export interface HubApi {
+  controllerStatus?(): Promise<ControllerStatus>;
+  controllerEnable?(enabled: boolean): Promise<ControllerStatus>;
+  controllerReply?(id: string, reply: ControllerReply): Promise<void>;
+  onControllerCommand?(callback: (request: ControllerRequest) => void): () => void;
   bootstrap(): Promise<Bootstrap>;
   browse(request: BrowseRequest): Promise<Page>;
   folders(): Promise<Folder[]>;

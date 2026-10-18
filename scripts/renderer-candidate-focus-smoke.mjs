@@ -1,3 +1,4 @@
+import { openSearchKeyboard } from './search-test-entry.mjs';
 import assert from 'node:assert/strict';
 import { mkdir, writeFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
@@ -63,7 +64,7 @@ for (const tv of [false, true]) {
       await page.getByRole('switch', { name: '电视模式', exact: true }).click();
       await page.getByRole('button', { name: '关闭弹窗', exact: true }).click();
     }
-    await page.getByRole('button', { name: '手柄屏幕键盘', exact: true }).click();
+    await openSearchKeyboard(page);
     await prepare();
     await choose();
     await page.waitForFunction(() => document.activeElement?.textContent === 'n');

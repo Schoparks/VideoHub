@@ -32,6 +32,7 @@
   .play-indicator svg,
   .card-details {
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   .modal-scrim {
@@ -53,6 +54,7 @@
     color: CanvasText;
     box-shadow: none;
     backdrop-filter: none;
+    -webkit-backdrop-filter: none;
   }
 
   button.active,

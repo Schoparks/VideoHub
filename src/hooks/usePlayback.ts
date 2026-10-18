@@ -60,14 +60,14 @@ export function usePlayback(options: PlaybackOptions) {
     if (!interruption.current.cancelOpening()) interruption.current.cancelPending();
   }), []);
 
-  const play = async (
+  const openPlayback = async (
     input: MediaItem | (() => Promise<MediaItem>),
     part?: MediaPart,
     quality?: number,
     position?: number,
     failure?: (message: string) => void,
   ) => {
-    if (playPending.current) return;
+    if (playPending.current) return 'busy' as const;
     if (!sourceRef.current) {
       const opener = dialog === 'details' ? focusedCard.current : document.activeElement as HTMLElement;
       returnFocus.current = rememberFocusReturn(opener, true);
@@ -78,19 +78,21 @@ export function usePlayback(options: PlaybackOptions) {
     setOpening(true);
     try {
       const item = typeof input === 'function' ? await input() : input;
-      if (token !== playbackRequest.current) return;
+      if (token !== playbackRequest.current) return 'canceled' as const;
       const resolved = await api.resolve(item, part, quality);
       if (token !== playbackRequest.current) {
         await api.release(resolved.sessionId);
-        return;
+        return 'canceled' as const;
       }
       const playback = withKnownPlaybackParts(resolved, sourceRef.current);
       if (position !== undefined) playback.startAt = position;
       sourceRef.current = playback;
       setSource(playback);
       if (dialog && activeDialog.current === dialog && initiatingDialog === dialogVersion.current) closeDialog();
+      return 'opened' as const;
     } catch (error) {
       if (token === playbackRequest.current) (failure || notify)(message(error));
+      return token === playbackRequest.current ? 'failed' as const : 'canceled' as const;
     } finally {
       if (token === playbackRequest.current) {
         playPending.current = false;
@@ -98,6 +100,7 @@ export function usePlayback(options: PlaybackOptions) {
       }
     }
   };
+  const play = async (...args: Parameters<typeof openPlayback>) => { await openPlayback(...args); };
 
   const closePlayer = async () => {
     cancelPending();
@@ -142,7 +145,7 @@ export function usePlayback(options: PlaybackOptions) {
   };
 
   return {
-    source, opening, setOpening, play, closePlayer, next, cancelOpening, cancelPending,
+    source, opening, setOpening, play, openPlayback, closePlayer, next, cancelOpening, cancelPending,
     nextKind: nextPlaybackTarget(source, queue)?.kind,
     canCancelOpening: opening && playPending.current && !source,
   };

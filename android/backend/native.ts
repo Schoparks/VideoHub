@@ -2,6 +2,9 @@ import { connectionFailure } from '../../src/shared/connection-failure';
 import { abortFailure } from './abort-signals';
 
 export interface NativeBackend {
+  controllerStatus(): string;
+  controllerEnable(enabled: boolean): string;
+  controllerReply(id: string, json: string): void;
   read(name: string): string;
   write(name: string, value: string): string;
   digest(algorithm: string, value: string): string;

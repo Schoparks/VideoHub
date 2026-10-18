@@ -1,5 +1,5 @@
 import type { ReactNode, Ref } from 'react';
-import { Gamepad2, Keyboard, Link, Monitor, Play, Plus, Search, RefreshCw } from 'lucide-react';
+import { Gamepad2, Link, Monitor, Play, Plus, Search, RefreshCw } from 'lucide-react';
 import type { Bootstrap } from '../shared/types';
 import { navigation, type Dialog, type Route } from '../navigation';
 import { CoverImage } from './CoverImage';
@@ -51,18 +51,22 @@ export function AppShell(props: Props) {
             <input
               aria-label="搜索视频" placeholder="搜索视频" value={query} data-gamepad-search
               onChange={event => props.setQuery(event.target.value)}
-              onCompositionStart={ime.onCompositionStart} onCompositionEnd={ime.onCompositionEnd} onKeyDown={ime.onKeyDown}
+              onCompositionStart={ime.onCompositionStart} onCompositionEnd={ime.onCompositionEnd}
+              onKeyDown={event => {
+                ime.onKeyDown(event);
+                if (event.key === 'Enter' && !query.trim() && !event.defaultPrevented && !ime.pending()) {
+                  event.preventDefault();
+                  dialog('search');
+                }
+              }}
             />
-            <button type="button" aria-label="手柄屏幕键盘" title="屏幕键盘" onClick={() => dialog('search')}>
-              <Keyboard size={18} />
-            </button>
           </form>
-          {window.hubPlatform !== 'android' && <button
+          <button
             className="icon-button tv-button" title="电视模式" aria-label="切换电视模式"
             aria-pressed={boot.preferences.tvMode} onClick={props.toggleTv}
           >
             <Monitor size={21} />
-          </button>}
+          </button>
           <button className="profile" onClick={() => dialog('account')} aria-label="管理 B 站账号">
             {boot.account.avatar ? <CoverImage src={boot.account.avatar} alt="" artworkSize={160} /> : <span>映</span>}
             <i className={boot.account.app && boot.account.web ? 'online' : ''} />

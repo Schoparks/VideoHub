@@ -4,6 +4,16 @@
 
 ## 常用验证
 
+`node scripts/renderer-window-restore-smoke.mjs` 交叉验证电视偏好/实际窗口全屏状态、重复播放、切换中退出和初始查询期间重复确认；`renderer-fullscreen-smoke.mjs`、`renderer-exit-smoke.mjs`、`renderer-preference-refresh-smoke.mjs` 保留原生事件、失败重试、退出回焦及设置排队合同。`renderer-glass-resize-smoke.mjs` 计数连续尺寸变化中的位移纹理编码并核对最终尺寸和媒体节点，均为无窗口夹具，不代表实体显示器转场帧率。
+
+`node scripts/desktop-player-window-smoke.mjs` 在始终隐藏的全新Electron配置中验证实际本地MP4解码、两种电视模式偏好、全屏读取/按钮及退出恢复、同一暂停视频节点和隐藏保护。通过 `YINGJI_EXECUTABLE` 指向交付程序；隐藏模式不执行实际窗口全屏，不能用它验收原生转场流畅度。
+
+`node scripts/renderer-setting-editing-smoke.mjs` 在1440×950和1920×1080验证顶栏唯一搜索焦点、空搜索回车、设置确认进入/返回结束编辑、滚轮不改值、滑条首次点击和滑动不改值。手机回归另检查320×568、390×640、844×390单屏、弹出卡片搜索语义/关闭、图标、移出取消与迟到兼容click；均为无窗口隔离夹具，不等同于iOS系统联系人自动填充实测。
+
+手机遥控使用 `pnpm test --run tests/phone-controller.test.ts` 校验有限协议、HTTP 授权、Host/Origin、大小与关闭换钥；`pnpm build` 同时生成独立手机资源。`node scripts/renderer-phone-controller-smoke.mjs` 验证两种桌面视口和320/390px手机页面、中文搜索、链接失败/打开、暂停、映射保存、长按取消及断开；媒体和桌面接口为夹具。`node scripts/desktop-phone-controller-smoke.mjs` 在始终隐藏的全新隔离 Electron 配置中，固定前台文档可见性测试真实 preload/IPC、原生服务和原创本地 MP4 解码，窗口不显示；可通过 `YINGJI_EXECUTABLE` 指向新打包的程序，验证实际交付目录。
+
+安卓先构建并安装隔离调试 APK，再显式指定 `YINGJI_ANDROID_SERIAL=emulator-5556` 运行 `node scripts/android-phone-controller-smoke.mjs`；仅接受隔离 emulator，并核对 WebView66。该脚本通过 ADB 转发测试原生 TCP 服务、中文搜索接线、本地 MP4、暂停及 Activity 后台撤销，搜索使用固定空列表，未调用账号服务。两端真实解码测试均自动生成 `.tmp/phone-control-media/` 样片；ADB转发与无窗口手机浏览器不等同于实体手机 Wi-Fi 或电视验收。
+
 ```sh
 pnpm typecheck
 pnpm test
@@ -112,3 +122,7 @@ YINGJI_LIVE_TEST=1 pnpm smoke
 
 
 程序和预览使用同源绿色播放图标。修改 `public/app-icon.svg` 后可运行 `node scripts/build-app-icon.mjs` 重新生成透明 512 PNG；此可选工具使用无窗口浏览器，普通构建直接读取现有图标，平台格式由打包工具生成。
+
+`node scripts/renderer-settings-parity-smoke.mjs` 无窗口检查四个设置分类的确认切换、上下落焦、两种验收尺寸无滚动及桌面/安卓相同配置的控件几何一致。`YINGJI_ANDROID_SERIAL=emulator-5556 node scripts/android-settings-layout-smoke.mjs` 仅接受显式隔离旧内核模拟器，保存匿名测试偏好后重启该测试进程，验证真实WebView66的四页布局及二维码，并在 `.tmp/android-settings-layout/` 留存截图；不连接实体设备。正式APK关闭调试，页面CDP检查使用 `.tmp/android-test/` 的显式测试构建。
+
+玻璃与按钮验证见 [材质说明](glass-materials.md)。`renderer-glass-buttons-smoke.mjs`、`renderer-glass-compat-smoke.mjs` 使用无窗口浏览器检查双端按钮反馈与兼容层；`YINGJI_ANDROID_SERIAL=emulator-5556 node scripts/android-glass-smoke.mjs` 仅在显式隔离旧内核模拟器检查真实材质/七键反馈与原创样片播放。播放器位置、菜单与参数另运行现有命中稳定/菜单命中/参数选择脚本。

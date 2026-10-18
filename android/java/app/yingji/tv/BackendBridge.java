@@ -24,6 +24,9 @@ final class BackendBridge {
         this.gateway = gateway; this.library = library; this.executor = executor;
     }
     @JavascriptInterface public boolean secure() { return store.available(); }
+    @JavascriptInterface public String controllerStatus() { return activity.controllerStatus(); }
+    @JavascriptInterface public String controllerEnable(boolean enabled) { return activity.controllerEnable(enabled); }
+    @JavascriptInterface public void controllerReply(String id, String json) { activity.controllerReply(id, json); }
     @JavascriptInterface public int videoSupport(String json) { return VideoSupport.score(json); }
     @JavascriptInterface public String read(String name) {
         try { return store.read(name); }

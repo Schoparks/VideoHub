@@ -66,8 +66,7 @@
     "asar": true,
     "win": {
       "target": [
-        "nsis",
-        "portable"
+        "dir"
       ]
     },
     "mac": {

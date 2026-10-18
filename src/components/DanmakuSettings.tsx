@@ -1,12 +1,10 @@
 import { useId } from 'react';
-import { MessageSquare } from 'lucide-react';
 import type { Preferences } from '../shared/types';
 
 export function DanmakuSettings({ value, change }: { value: Preferences; change: (value: Preferences) => void }) {
   const opacityId = useId();
   return (
     <>
-      <div className="settings-heading"><MessageSquare size={19} /><h3>弹幕</h3></div>
       <label className="setting-row">
         <span><b>显示 B 站视频弹幕</b></span>
         <input type="checkbox" role="switch" aria-label="显示 B 站视频弹幕" checked={value.danmaku}

@@ -17,7 +17,7 @@ export class Store {
     try {
       const value = JSON.parse(raw);
       if (value.version !== 1 || !['library', 'roots', 'history', 'queue'].every(key => Array.isArray(value[key]))) throw new Error();
-      this.state = { ...value, preferences: { ...this.state.preferences, ...value.preferences, tvMode: true } };
+      this.state = { ...value, preferences: { ...this.state.preferences, ...value.preferences } };
       this.state.history = this.state.history.map(restorePgcHistory);
       this.state.queue = this.state.queue.map(restorePgcItem);
     } catch {

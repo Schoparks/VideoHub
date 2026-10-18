@@ -48,6 +48,7 @@ export async function checkPlaybackSettings(page, output) {
 
   assert.equal(await page.evaluate(() => window.reliability.danmakuCalls), 0);
   await page.getByRole('button', { name: '播放设置', exact: true }).click();
+  await page.getByRole('tab', { name: '弹幕', exact: true }).click();
   await page.getByRole('switch', { name: '显示 B 站视频弹幕', exact: true }).click();
   await page.getByRole('combobox', { name: '弹幕字号', exact: true }).selectOption('32');
   await page.getByRole('combobox', { name: '弹幕显示区域', exact: true }).selectOption('0.25');
@@ -84,6 +85,7 @@ export async function checkPlaybackSettings(page, output) {
   await page.waitForTimeout(100);
   assert.equal(await page.locator('.danmaku-layer').count(), 0);
   await settings();
+  await page.getByRole('tab', { name: '弹幕', exact: true }).click();
   await page.getByRole('switch', { name: '显示 B 站视频弹幕', exact: true }).click();
   await closeSettings();
   checks.push('danmaku failures remain separate from video errors; late responses after leaving cannot reopen the overlay');

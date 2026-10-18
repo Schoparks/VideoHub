@@ -21,7 +21,7 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 public final class MainActivity extends Activity {
-    private WebView ui;
+    private volatile WebView ui;
     private WebView backend;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ExecutorService executor = Executors.newFixedThreadPool(4);
@@ -29,8 +29,17 @@ public final class MainActivity extends Activity {
     private NativeHttp http;
     private MediaGateway gateway;
     private LocalLibrary library;
-    private boolean ready;
+    private PhoneController controller;
+    private volatile boolean resumed;
+    private volatile boolean ready;
     private long lastDirection;
+    private final Runnable controllerRefresh = new Runnable() {
+        @Override public void run() {
+            if (controller == null || executor.isShutdown()) return;
+            executor.execute(() -> controller.enable(true));
+            handler.postDelayed(this, 5000);
+        }
+    };
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -58,6 +67,8 @@ public final class MainActivity extends Activity {
             gateway = new MediaGateway(this);
             http = new NativeHttp();
             library = new LocalLibrary(this, executor);
+            controller = new PhoneController(this);
+            handler.post(controllerRefresh);
             phase = "加载后端";
             backend = webView(true);
             backend.addJavascriptInterface(new BackendBridge(this, new SecureStore(this), http, gateway, library, executor), "Backend");
@@ -120,6 +131,24 @@ public final class MainActivity extends Activity {
             waiting.clear();
         });
     }
+    String controllerStatus() { return controller == null ? "{\"enabled\":false,\"urls\":[]}" : controller.enable(true); }
+    String controllerEnable(boolean enabled) {
+        if (controller == null || !resumed) return "{\"error\":\"应用当前不可遥控\"}";
+        return controller.enable(true);
+    }
+    boolean controllerAvailable() { return resumed && ready && ui != null; }
+    void controllerReply(String id, String json) { if (controller != null) controller.reply(id, json); }
+    void controllerCommand(String json) {
+        handler.post(() -> {
+            if (!controllerAvailable()) {
+                try { controllerReply(new JSONObject(json).getString("id"), "{\"error\":\"unavailable\"}"); }
+                catch (Exception ignored) { }
+                return;
+            }
+            ui.evaluateJavascript("window.dispatchEvent(new CustomEvent('hub-controller-command',{detail:JSON.parse("
+                + JSONObject.quote(json) + ")}))", null);
+        });
+    }
     void uiReply(String id, String json) {
         handler.post(() -> { if (ui != null) ui.evaluateJavascript("window.hubReply && window.hubReply(" + JSONObject.quote(id) + "," + JSONObject.quote(json) + ")", null); });
     }
@@ -173,15 +202,23 @@ public final class MainActivity extends Activity {
     }
     @Override public void onWindowFocusChanged(boolean focus) { super.onWindowFocusChanged(focus); if (focus) immersive(); }
     @Override protected void onPause() {
+        resumed = false;
+        if (controller != null) controller.cancelPending();
         if (ui != null) { ui.evaluateJavascript("window.dispatchEvent(new Event('hub-suspend'))", null); ui.onPause(); }
         super.onPause();
     }
-    @Override protected void onResume() { super.onResume(); if (ui != null) { ui.onResume(); immersive(); } }
+    @Override protected void onResume() {
+        super.onResume();
+        resumed = true;
+        if (controller != null) executor.execute(() -> controller.enable(true));
+        if (ui != null) { ui.onResume(); immersive(); }
+    }
     @Override protected void onActivityResult(int request, int result, Intent data) {
         super.onActivityResult(request, result, data);
         if (request == LocalLibrary.PICK && library != null) library.result(result, data);
     }
     @Override protected void onDestroy() {
+        if (controller != null) controller.destroy();
         if (gateway != null) gateway.close();
         if (http != null) http.close();
         executor.shutdownNow();

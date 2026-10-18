@@ -1,9 +1,12 @@
 import type { Direction } from './geometry';
 import { browseLayoutNavigation } from './browse-hierarchy';
+import { settingsNavigation } from './settings-navigation';
 export type { Direction } from './geometry';
 
 /** Layout-owned routes take precedence over distance between control centers. */
 export function layoutNavigation(active: HTMLElement, elements: HTMLElement[], direction: Direction) {
+  const settings = settingsNavigation(active, elements, direction);
+  if (settings) return settings;
   const horizontal = direction === 'left' || direction === 'right';
   const step = direction === 'left' || direction === 'up' ? -1 : 1;
   const browse = browseLayoutNavigation(active, elements, direction);

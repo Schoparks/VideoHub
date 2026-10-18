@@ -14,5 +14,8 @@
 @import './styles/card-layout.css';
 @import './styles/glass.css';
 @import './styles/glass-player.css';
+@import './styles/glass-compat.css';
+@import './styles/glass-buttons.css';
+@import './styles/glass-player-labels.css';
 @import './styles/player-timeline.css';
 @import './styles/glass-accessibility.css';

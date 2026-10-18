@@ -1,5 +1,5 @@
 import { useId } from 'react';
-import { Gamepad2, RotateCcw } from 'lucide-react';
+import { RotateCcw } from 'lucide-react';
 import { defaultPreferences, type Preferences } from '../shared/types';
 import { actionLabels, buttonLabel } from '../input/bindings';
 import { useBindingCapture } from '../input/use-binding-capture';
@@ -16,7 +16,6 @@ export function GamepadSettings({ value, change, device }: Props) {
   const standard = !device || Array.from(navigator.getGamepads?.() || []).find(pad => pad?.id === device)?.mapping === 'standard';
   return (
     <>
-      <div className="settings-heading"><Gamepad2 size={19} /><h3>手柄</h3></div>
       <p className="device-status">{device || '未检测到手柄，请连接后按任意键唤醒'}</p>
       {feedback && <p className="muted" role="status">{feedback}</p>}
       <label className="setting-row setting-range" htmlFor={deadzoneId}>

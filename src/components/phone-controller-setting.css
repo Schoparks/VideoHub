@@ -1,0 +1,19 @@
+.phone-pairing {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 0;
+}
+.phone-qr {
+  flex: 0 0 200px;
+  width: 200px;
+  height: 200px;
+  background: white;
+  border-radius: 12px;
+  overflow: hidden;
+}
+.phone-qr img { display: block; width: 100%; height: 100%; }
+.phone-pairing p { margin: 0 0 12px; }
+.phone-pairing label { display: flex; align-items: center; gap: 12px; }
+.phone-address { overflow-wrap: anywhere; }
+[data-tv="true"] .phone-qr { flex-basis: 240px; width: 240px; height: 240px; }

@@ -105,6 +105,7 @@ for (const tv of [false, true]) {
     checks.push(`${mode}: B returns content through each navigation level without replacing the page`);
 
     await settings();
+    await page.getByRole('tab', { name: '弹幕', exact: true }).click();
     const enabled = page.getByRole('switch', { name: '显示 B 站视频弹幕', exact: true });
     const opacity = page.getByRole('slider', { name: '弹幕不透明度', exact: true });
     const font = page.getByRole('combobox', { name: '弹幕字号', exact: true });
@@ -113,6 +114,7 @@ for (const tv of [false, true]) {
     await pressPad(page, 0);
     await pressPad(page, 13);
     assert.equal(await focused(opacity), true);
+    await pressPad(page, 0);
     await pressPad(page, 14);
     assert.equal(Number(await opacity.inputValue()), .75);
     await page.waitForFunction(() => window.reliability.boot.preferences.danmakuOpacity === .75);
@@ -126,7 +128,7 @@ for (const tv of [false, true]) {
     assert.equal(await focused(enabled), true);
     await pressPad(page, 0);
     await pressPad(page, 13);
-    assert.equal(await focused(page.getByRole('slider', { name: '摇杆死区', exact: true })), true);
+    assert.equal(await focused(page.getByRole('switch', { name: '显示 B 站视频弹幕', exact: true })), true);
     await enabled.focus();
     await pressPad(page, 0);
     await page.keyboard.press('ArrowDown');

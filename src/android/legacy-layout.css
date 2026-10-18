@@ -19,8 +19,17 @@ html[data-legacy-webview='true'] .dynamic-text {
 }
 
 html[data-legacy-webview='true'] .settings-heading > * + *,
-html[data-legacy-webview='true'] .brand > * + * {
+html[data-legacy-webview='true'] .global-search > * + * {
   margin-left: 10px;
+}
+
+html[data-legacy-webview='true'] .brand > * + * {
+  margin-left: 12px;
+}
+
+html[data-legacy-webview='true'] .topbar > .tv-button,
+html[data-legacy-webview='true'] .topbar > .profile {
+  margin-left: 18px;
 }
 
 html[data-legacy-webview='true'] button > svg {
@@ -39,6 +48,10 @@ html[data-legacy-webview='true'] .navigation-bar > * + * {
   margin-left: 20px;
 }
 
+html[data-legacy-webview='true'] .navigation-bar > .nav-item {
+  margin-left: auto;
+}
+
 html[data-legacy-webview='true'] .navigation-bar nav > * + * {
   margin-left: 4px;
 }
@@ -47,6 +60,22 @@ html[data-legacy-webview='true'] .player-buttons > * + *,
 html[data-legacy-webview='true'] .controller-actions > * + *,
 html[data-legacy-webview='true'] .detail-actions > * + * {
   margin-left: 16px;
+}
+
+html[data-legacy-webview='true'] .setting-row > * + * {
+  margin-left: 16px;
+}
+
+html[data-legacy-webview='true'] .page-actions > * + * {
+  margin-left: 8px;
+}
+
+html[data-legacy-webview='true'] .phone-pairing > * + * {
+  margin-left: 24px;
+}
+
+html[data-legacy-webview='true'] .phone-pairing label > * + * {
+  margin-left: 12px;
 }
 
 html[data-legacy-webview='true'] .keyboard-row > * + *,
@@ -66,11 +95,11 @@ html[data-legacy-webview='true'] .player-option-list > * + * {
   margin-top: 12px;
 }
 
-html[data-legacy-webview='true'] .modal .setting-row {
-  background: var(--surface);
+html[data-legacy-webview='true'] .global-search {
+  width: 350px;
+  max-width: 100%;
 }
 
-html[data-legacy-webview='true'] .global-search {
+html[data-legacy-webview='true'][data-tv='true'] .global-search {
   width: 420px;
-  max-width: 100%;
 }

@@ -106,11 +106,12 @@ export function PlayerControls(props: Props) {
             aria-pressed={props.danmakuEnabled} onClick={props.toggleDanmaku}><MessageSquare /></button>}
           <button className="icon-button" aria-label="播放设置" onClick={props.settings}
             aria-disabled={props.exiting || undefined} data-focus-retain={props.exiting || undefined}><Settings2 /></button>
-          {window.hubPlatform !== 'android' && <button className="icon-button" aria-label={props.fullscreen ? '退出播放器全屏' : '播放器全屏'} onClick={props.toggleFullscreen}
+          <button className="icon-button" aria-label={props.fullscreen ? '退出播放器全屏' : '播放器全屏'} onClick={props.toggleFullscreen}
+            disabled={window.hubPlatform === 'android'}
             aria-busy={props.fullscreenBusy || undefined} aria-disabled={props.fullscreenBusy || props.exiting || undefined}
             data-focus-retain={props.fullscreenBusy || props.exiting || undefined}>
             {props.fullscreen ? <Minimize /> : <Maximize />}
-          </button>}
+          </button>
         </div>
         <div className="player-hints">
           <div data-input-hints-host />

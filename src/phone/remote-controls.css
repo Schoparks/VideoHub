@@ -1,0 +1,58 @@
+.navigation {
+  min-height: 0;
+  padding: 10px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) 42px minmax(40px, 56px);
+  gap: 8px;
+}
+.dpad {
+  display: grid;
+  grid-template: repeat(3, minmax(40px, 1fr)) / repeat(3, minmax(44px, 72px));
+  gap: 6px;
+  justify-content: center;
+  align-self: center;
+  height: 100%;
+  max-height: 222px;
+}
+.dpad button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  touch-action: none;
+  user-select: none;
+}
+.dpad svg { width: 26px; height: 26px; }
+.up { grid-area: 1 / 2; }
+.left { grid-area: 2 / 1; }
+.confirm { grid-area: 2 / 2; color: var(--accent); font-weight: 600; background: #edf4ff; }
+.right { grid-area: 2 / 3; }
+.down { grid-area: 3 / 2; }
+.utility-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.utility-row button { display: flex; align-items: center; justify-content: center; gap: 8px; touch-action: none; }
+.touchpad {
+  width: 100%;
+  min-height: 40px;
+  border-style: dashed;
+  background: #f6f7f9;
+  color: var(--muted);
+  font-size: 12px;
+  touch-action: none;
+  user-select: none;
+}
+.shortcuts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(2, minmax(42px, 50px));
+  gap: 6px;
+}
+.shortcuts button { display: flex; align-items: center; justify-content: center; touch-action: none; user-select: none; }
+.play-pause { display: inline-flex; align-items: center; gap: 2px; }
+@media (max-height: 600px) {
+  .navigation { gap: 6px; padding: 8px; grid-template-rows: minmax(0, 1fr) 40px 40px; }
+  .dpad { grid-template-rows: repeat(3, minmax(36px, 1fr)); }
+  .dpad button { min-height: 36px; }
+  .shortcuts { grid-template-rows: repeat(2, 42px); }
+}

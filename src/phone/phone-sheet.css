@@ -1,0 +1,44 @@
+.phone-sheet {
+  position: fixed;
+  margin: 0 auto;
+  width: min(420px, calc(100% - 24px));
+  padding: 18px;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 22px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+.phone-sheet::backdrop { background: #0c142e70; }
+.phone-sheet header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
+.phone-sheet h2 { margin: 0; font-size: 19px; }
+.sheet-close { display: grid; place-items: center; width: 42px; padding: 8px; }
+.send-form label { display: block; font-size: 13px; margin-bottom: 8px; }
+.send-form input {
+  width: 100%;
+  min-height: 50px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  color: inherit;
+  background: var(--surface);
+  padding: 12px;
+  font-size: 16px;
+  appearance: none;
+}
+.primary { width: 100%; margin-top: 16px; color: white; background: var(--accent); border-color: var(--accent); }
+.primary:active { background: #1257af; }
+.form-error { font-size: 13px; color: #b32b35; }
+.shortcut-settings { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+.shortcut-settings label { color: var(--muted); font-size: 12px; min-width: 0; }
+.shortcut-settings select {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  margin-top: 6px;
+  padding: 8px;
+  color: inherit;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}

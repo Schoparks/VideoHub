@@ -1,5 +1,9 @@
 # 分层架构
 
+## 跨内核玻璃与按钮
+
+玻璃效果按CSS实际能力分级，视觉注册和按钮光照不读取业务状态或媒体帧。旧WebView仅对弹窗后的已停用浏览外壳使用普通模糊，播放页面始终不滤镜化视频；两端按钮共用薄填色/边缘及有界确认反馈，菜单组内不叠加独立背景滤镜。播放器提示底色贴合文字，原两行容量和命中坐标保持。模块职责、苹果官方设计依据及验收边界见 [玻璃材质与按钮](glass-materials.md)。
+
 ## 安卓播放与搜索的兼容边界
 
 `dash-video` 保持先选清晰度、再选该清晰度编码的顺序。安卓后端注入 `androidVideoSupport`，以当前 WebView 的 `MediaSource.isTypeSupported` 和原生 `VideoSupport` 有限格式能力查询共同评分；仅正面确认的 HEVC 可扩展候选，能力不足不跨清晰度降级。原生桥只接收编码、尺寸、帧率，不接收媒体 URL 或凭证；两层独立查询，有界缓存仅保存能力元组，选轨仍要求交集。播放来源携带所选清晰度至多三类有限能力，MEDIA3/4由纯共享格式化函数转换为系统声明及内核支持反馈；实际选中编码对应精确轨道，其他编码对应最佳候选。能力声明不等于实际解码成功，未知不能误报为确定不支持。能力依据为 [Android CodecCapabilities](https://developer.android.com/reference/android/media/MediaCodecInfo.CodecCapabilities#isFormatSupported(android.media.MediaFormat))。
@@ -20,7 +24,7 @@ Java 的 `MainActivity` 派发七键语义事件与暂停事件；`AppWebClient`
 
 Android 构建将前后端语法降至 Chromium66。`runtime-compatibility` 补齐实际使用的标准 API 及安全随机 UUID，`dom-compatibility` 提供 inert/ResizeObserver/replaceChildren；字素删除缺少 Intl.Segmenter 时使用 Graphemer。旧内核焦点与布局样式仅在能力检查失败时启用，构建插件转换 inset、grid-gap、appearance 等等价声明。MP4 初始化段的64位长度按两个32位字检查，在64KiB边界下拒绝非零高字，不依赖 BigInt、不放宽加密检查。Zod 的未使用64位常量在 Android 构建中经 JSBI 精确初始化，原 JSON IPC 校验不变。Android 视频使用内嵌透明封面，避免旧 WebView 默认封面被 CSP 拒绝而触发错误，未放开外部协议或页面权限。
 
-遥控器与键盘/手柄共用 `use-input` 的活动范围、焦点、滚动、确认和返回；`remote.ts` 只校验七键与提供对应提示。浏览菜单动作在 App 层接线到详情/设置，播放菜单动作在现有 Player actions 中揭示播放设置；不创建第二套播放生命周期。Android 固定电视全屏，省略无实际作用的电视模式/全屏入口。第三方网页自动检测尚未移植，链接解析明确失败，不创建伪造来源。
+遥控器与键盘/手柄共用 `use-input` 的活动范围、焦点、滚动、确认和返回；`remote.ts` 只校验七键与提供对应提示。浏览菜单动作在 App 层接线到详情/设置，播放菜单动作在现有 Player actions 中揭示播放设置；不创建第二套播放生命周期。Android 与桌面共用同一界面和字号模式，设置/顶栏不按平台隐藏入口，原生始终横屏全屏，播放器窗口全屏按钮在同位置禁用。第三方网页自动检测尚未移植，链接解析明确失败，不创建伪造来源。
 
 ## 桌面与共用模块
 
@@ -56,6 +60,16 @@ Android 的 `HttpFailure` 将原生网络异常转换为有限 DNS、TLS、超�
 
 ## 前端结构
 
+手机遥控主页以固定动态视口网格容纳方向区、滑动区和六个图标快捷键，`PhoneSheet` 用原生dialog隔离背景，搜索/链接/快捷键设置按需打开，监听可见视口以避让手机键盘。`SendForm` 使用search类型、明确的search-query/media-url字段及关闭自动完成，移除phone命名；系统联系人建议仍由手机浏览器决定。`ControlButton` 松手提交普通点击、静止长按才连发，`usePointerClickGuard` 阻止取消手势的兼容click补发，保留键盘/辅助点击。
+
+`input/setting-editing` 只管理设置select/range的编辑意图：确认进入编辑后左右才调用原adjustSelect/adjustRange，上下/返回/完成结束编辑；原即时偏好回写与失败回滚不变。滚轮转交所在模态滚动，滑条首次短点只进入编辑，首次滑动不写入。该门控不作用于播放器时间线和参数菜单。顶栏移除独立键盘按钮，单一搜索框确认进入屏幕键盘，原生空搜索回车也可打开，非空回车仍提交搜索。
+
+手机遥控由独立的 `src/phone/` 页面、`shared/remote-control` 有限数据契约和 `usePhoneController` 接线组成。`useInput` 消费方向/确认及快捷语义，搜索复用 App.search，链接复用 usePlayback.openPlayback 的 opened/busy/canceled/failed 结果，保留原播放取消与迟到来源释放。覆盖层或播放活动时不接受远端文本替换，不建立另一份推荐或播放调度。
+
+桌面 `electron/remote/` 及安卓原生 `PhoneController`/`ControllerHttp` 随应用自动监听内网 IPv4 随机端口，定时重试及刷新网络地址，手机资源独立打包。二维码片段含随机256位临时密钥，页面读取后移出地址栏，当前标签页临时保留，命令通过 Authorization 请求头提交。服务只允许固定静态路径、状态和命令，校验内网对端、精确 Host/Origin、JSON及有限类型，并限制大小、时限、速率与并发；不访问账号/文件/媒体网关，不开放通用 IPC。桌面通过命名 preload 事件与 controllerReply 校验结果，安卓通过本地原生事件及已校验后端命名桥返回有限错误。暂停取消等待操作但保留监听，后台立即拒绝命令，返回沿用连接，退出/销毁才关闭；操作不在断线后排队重放。兼容原命名controllerEnable桥，但false不再关闭。`PhoneControllerSetting`/`useControllerPairing` 仅呈现及管理连接状态和二维码，网页预览不支持原生遥控服务。
+
+设置由 `Settings` 按观看、弹幕、手机遥控、手柄分类挂载当前面板，观看控件集中于 `ViewingSettings`。分类使用手动确认的tab语义，`settings-navigation` 只决定分类左右及首控件上下落焦；`setting-editing` 保持先确认后编辑，保存仍通过原偏好串行模块。两端相同字号/视口下使用同一DOM、CSS与控件尺寸，旧WebView仅做能力回退，不另建电视设置页。
+
 通用 URL 播放通过已有 `openUrl/resolve` 进入主进程。`url-media` 提供纯地址与格式契约；`web-media-probe` 在无 preload、无 Node、独立临时会话的隐藏静音窗口内有界检测，`web-media-script` 读取各 frame 的 video、元数据、已配置地址和媒体资源，对可见原生视频触发静音播放，并触发已知播放器的播放按钮。`web-media-request` 保留对应页面 Cookie、必要 Referer 和 User-Agent，按 Chromium 请求身份跟踪至多五次受限 HTTP(S) 重定向，补全 Electron 未提供的最终响应地址；内部关联标记发送前移除，不读取平台凭证。返回经白名单 `cancelUrlResolution` 中断等待并销毁窗口；应用退出也取消，成功后临时会话由 PlaybackSessions 持有，释放时清理存储与缓存。历史保持原页面身份，媒体通道地址不持久化。
 
 `read-manifest` 按流限制清单大小及读取时间。`web-dash` 展开 BaseURL 与继承的分段定义，保留音视频轨、时间线和 byte range，重写 SegmentList/Template/Base；`url-template` 仅为已注册媒体允许有限数字参数。XML 外部实体、外部链接和明确 ContentProtection 被拒绝。HLS 子清单、分段、初始化及普通密钥 URI 继续经会话能力转发；媒体网关不转发渲染器 Cookie。网页 DASH 使用自适应选轨，B 站单画质合同保持。检测到地址与真实媒体解码分别验收，网页登录、验证码及 DRM 不提供绕过。
@@ -70,7 +84,7 @@ Android 的 `HttpFailure` 将原生网络异常转换为有限 DNS、TLS、超�
 
 `input/focus.css` 的通用 modal 提示区为两行常用操作预留高度，隐藏模式保留提示原占用空间而只隐藏文字，初始空宿主也保持基准高度。这样手柄/键盘/鼠标切换不令居中弹窗移动，固定坐标点击仍落到原控件；后台提示仍受活动范围约束，播放器自己的提示规则保持。模态底部滚动安全区与提示可见性解耦。
 
-焦点描边由 `input/focus.css` 和主题 `--focus` 统一管理，使用2像素中性色单层描边及3像素外距；浅色深灰、深色近白，播放器固定近白，不叠加绿色光晕。搜索输入由搜索外壳呈现唯一描边，搜索按钮仍各自聚焦；描边不占布局空间，不改变已选状态或空间导航。aria-disabled/data-focus-retain 控件在实际键盘或手柄焦点上不整体淡化，保留细描边对比度；忙碌/成员状态、确认门控和无效动作提示仍由原业务和input规则决定。
+焦点描边由 `input/focus.css` 和主题 `--focus` 统一管理，使用2像素中性色单层描边及3像素外距；浅色深灰、深色近白，播放器固定近白，不叠加绿色光晕。顶栏搜索仅保留输入框一个焦点，由搜索外壳呈现唯一描边，确认进入屏幕键盘；描边不占布局空间，不改变已选状态或空间导航。aria-disabled/data-focus-retain 控件在实际键盘或手柄焦点上不整体淡化，保留细描边对比度；忙碌/成员状态、确认门控和无效动作提示仍由原业务和input规则决定。
 
 选集及倍速/清晰度侧面板通过 `player-menu-hints.css` 独立共享提示占位，按当前桌面/电视的实际提示字号预留两行及原选集间距。空宿主、提示隐藏及输入模式切换保持菜单、滚动视口和选项几何位置，只隐藏提示文字；活动范围和语义仍由 input/hints 管理，不复制确认/返回逻辑，也不改变通用 modal 或播放器底部布局。
 
@@ -208,7 +222,7 @@ B 站公共图片统一 HTTPS，桌面经 `yingji://app/image` 加载。图片�
 
 ## 扩展约定
 
-`electron/window-fullscreen.ts` 串行处理电视设置与播放器的全屏请求，已有目标直接返回，其余等待原生窗口确认；超时/关闭/异常撤下监听并拒绝请求，后续操作可重试。隐藏隔离模式不设置窗口全屏。IPC `getFullscreen` 只接受空参数，preload 显式暴露读取与布尔 `window:fullscreen` 订阅。`usePlayerWindow` 初始化读取/订阅实际状态，查询按版本隔离较新事件，卸载撤销监听；请求等待保焦与控制层显示，退出禁止新请求并恢复最新电视偏好。网页预览使用 DOM 全屏事件，发行桥必须提供能力；类型可选仅为旧桥及夹具兼容。无窗口/单元回归与隐藏状态 IPC 验证不等同于真实 Windows/macOS 全屏动画验收。
+`electron/window-fullscreen.ts` 串行处理电视设置与播放器的全屏请求，已有目标直接返回，其余等待原生窗口确认；超时/关闭/异常撤下监听并拒绝请求，后续操作可重试。隐藏隔离模式不设置窗口全屏。IPC `getFullscreen` 只接受空参数，preload 显式暴露读取与布尔 `window:fullscreen` 订阅。`usePlayerWindow` 保存初始化查询取得的实际窗口状态，按钮查询按版本隔离较新事件，卸载撤销监听；初始查询完成前不猜测切换目标，请求等待保焦与控制层显示。退出禁止新请求、等待已发出的操作后恢复进入播放时的实际状态；仅播放期间明确编辑电视偏好时使用最新设置。网页预览使用 DOM 全屏事件，发行桥必须提供能力；类型可选仅为旧桥及夹具兼容。无窗口/单元回归与隐藏状态 IPC 验证不等同于真实 Windows/macOS 全屏动画验收。
 
 `usePlayerMedia` 区分点播的速度状态与当前媒体输出速度；直播在元数据恢复及输出更新时统一使用 1，点播继续使用已有临时选择。切换来源不改写速度状态/存储，队列返回点播恢复临时值，新打开播放器读取默认值，解析与播放顺序保持。无窗口直播回归检查完整操作边界；可选 `player-test-live.mjs` 在既有隐藏账号流程中实际打开正在直播的关注房间，以真实视频帧/媒体时间验证解码和暂停/继续，缺少活动房间时不宣称已实播。
 

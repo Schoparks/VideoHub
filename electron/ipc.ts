@@ -6,6 +6,9 @@ export const itemSchema = z.object({
 });
 export const partSchema = z.object({ id: z.string().max(100), title: z.string().max(1000), aid: z.number().int().positive().optional(), cid: z.number().int().positive().optional(), bvid: z.string().regex(/^BV[\da-zA-Z]{10}$/).optional(), episodeId: z.number().int().positive().optional(), duration: z.number().nonnegative().optional() });
 export const schemas = {
+  controllerStatus: z.tuple([]),
+  controllerEnable: z.tuple([z.boolean()]),
+  controllerReply: z.tuple([z.string().uuid(), z.object({ error: z.enum(['busy', 'blocked', 'failed', 'unavailable', 'canceled']).optional() })]),
   bootstrap: z.tuple([]),
   cancelUrlResolution: z.tuple([]),
   browse: z.tuple([z.object({

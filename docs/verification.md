@@ -1,5 +1,57 @@
 # 验收记录
 
+## 2026-10-18 · 桌面全屏退出与尺寸变化
+
+- 修改前无窗口回归复现：电视偏好为true、实际窗口为false，进入视频后直接退出就变为全屏（`true !== false`）；连续12次尺寸变化触发24次位移图编码。修复保存实际进入状态，初始查询与临时切换串行，退出等待已发出的操作后恢复；播放期间明确修改电视设置仍沿用最新值。
+- `renderer-window-restore-smoke` 的16组交叉状态、重复播放、切换中退出及初始化重复确认通过；原 `renderer-fullscreen-smoke` 8组、`renderer-exit-smoke` 12组、`renderer-preference-refresh-smoke` 6组通过。窗口与媒体为隔离夹具，未接触日常账号。
+- `renderer-glass-resize-smoke` 检查连续变化期间0次编码、稳定后2次，最终滤镜宽度匹配1920px窗口，暂停视频节点保持；已查看最终播放器截图。普通内容更新不重新延长尺寸等待，清理同时撤销定时器/动画帧。原播放器命中稳定16组、玻璃明暗/对比度/无障碍9组通过，无页面异常。
+- TypeScript严格检查、生产构建和47文件299项单元通过。最终Windows免安装目录为 `release/fullscreen-restore-20261018/win-unpacked/`，旧包保留。`desktop-player-window-smoke` 使用该程序的全新隐藏配置，两个电视模式下实际原创MP4解码、全屏IPC/按钮、暂停节点保持与退出状态通过；隐藏保护始终有效，不代表原生窗口动画帧率验收。构建保留既有媒体分块体积提示。
+- 校验记录见 `.tmp/fullscreen-package-integrity.json`：ASAR中的22个构建文件逐项匹配源码构建，检查无账号/密钥/临时配置打入包；本轮累计97个新增/修改手写代码文件均不超过300行。当前需求仅桌面窗口，安卓原生始终全屏，本轮未重发APK；旧内核材质回退保持。
+
+## 2026-10-18 · 双端按钮与播放器玻璃材质
+
+- 用户要求以按钮质感为主，并同步播放页面。查阅苹果官方Buttons、Materials与WWDC25 Meet Liquid Glass，以薄材质、有限强调色、明确按压反馈和避免组内重复玻璃为依据；来源与实现边界见 [玻璃材质与按钮](glass-materials.md)。没有将网页近似材质称作苹果原生效果。
+- 统一独立操作、导航/设置分类、播放按钮、参数/选集和错误重试按钮的薄填色、细边高光与位置柔光；按压反馈不修改命中矩形或派发业务操作，指针取消/失焦/隐藏/移除清理。播放器主播放按钮略提高填色，提示底色贴合文字并保留两行容量，旧内核单一焦点环按圆角绘制。
+- 两端类型检查与生产构建、47文件299单元通过。最终 `renderer-glass-buttons-smoke` 两端明暗材质/确认/取消/禁用反馈、`renderer-glass-compat-smoke` 的能力回退/浏览模糊清理/无障碍/视频不加滤镜均通过。`renderer-glass-smoke` 验证现代原生折射、黑白帧文字至少4.5:1及减少透明度/提高对比度保持几何。
+- 播放器专项 `renderer-player-hit-stability-smoke`、`renderer-player-menu-hit-smoke`、`renderer-player-options-smoke`、`renderer-player-error-smoke` 通过：正常桌面/电视尺寸下输入方式切换保持按钮和进度条命中；倍速、清晰度、120集菜单、取消/确认及回焦、错误重试/返回正常。原播放调度、推荐与权限未改变。
+- 显式匿名隔离emulator-5556/Android9/WebView66.0.3359.158实测标准和前缀backdrop-filter、color-mix均不支持，filter/渐变可用。最终 `android-glass-smoke` 明暗弹窗透色/后方已停用浏览模糊、收起释放、圆角中性焦点/七键亮度反馈、原创本地MP4实际解码/暂停、播放控制及参数菜单通过；视频、播放器和活动前景均无filter，旧内核SVG滤镜数量为0。已查看修改前与最终设置/播放截图，证据在 `.tmp/glass-compat/`、`.tmp/android-glass/` 与 `.tmp/renderer-glass-buttons/`。该模拟器证据不能替代实体电视性能或像素验收。
+- Windows完整免安装目录 `release/glass-buttons-20261018/win-unpacked/` 共72文件、400167131字节，真实Yingji.exe隐藏隔离启动、常开遥控、菜单/返回、真实样片解码/暂停及休眠/恢复保留连接通过。正式APK `release/android-tv/yingji-tv-0.1.14.apk` 为versionCode15、1650160字节，沿用原签名且构建关闭调试；SHA-256 `1eef28766873f944ed76b97ddca14a59d4139005eb9daa475942bb3a3507c08d`。Windows22个构建文件、Android81个assets及DEX与最终产物一致，正式/已测调试APK的assets与DEX一致，同名校验摘要一致，证据 `.tmp/glass-package-integrity.json`。旧目录和APK保留。
+- 正式0.1.14在该隔离模拟器覆盖安装/启动成功，versionCode15，pkgFlags无DEBUGGABLE；完成后停止模拟器。新增/修改手写代码仍不超300行，无行数例外。未连接实体电视或读取日常账号；模拟器仅运行本轮创建的隔离配置。
+
+## 2026-10-18 · 常开遥控与短设置页交付
+
+- 手机遥控取消开关，随应用启动，定时重试并刷新网卡地址；安卓暂停/后台立即拒绝指令并取消等待，保留监听及临时密钥，前台恢复无需重扫。退出或进程销毁后重新配对，不建立系统常驻服务。
+- 设置按观看、弹幕、手机遥控、手柄分类，仅挂载当前面板。`renderer-settings-parity-smoke.mjs` 在1440×950、1920×1080及普通/电视字号下验证四页无滚动、方向只移动分类焦点/确认切换、上下进入/返回，以及相同配置下桌面/安卓全部设置控件和几何一致。截图在 `.tmp/renderer-settings-parity/`，现代浏览器夹具不等于实体电视像素验收。
+- 类型检查、47文件299单元及两端生产构建通过。设置防误改、布局导航、七键遥控、键盘空格/重映射及完整播放设置/偏好可靠性回归通过。手机页面真实HTTP联调通过搜索、链接、播放/暂停、忙碌/取消、防误触和断线不重放，手机布局沿用320×568、390×640、844×390检查。
+- Android9/WebView66.0.3359.158显式隔离emulator-5556验证自动开启、原生服务授权/跨站拒绝、手机中文搜索、本地MP4解码/暂停、后台拒绝以及前台恢复后原连接继续控制通过；未使用账号凭证或实体设备。`android-settings-layout-smoke.mjs` 在真实旧内核1920×1080逐页验证完整显示，确认无滚动并查看截图。补齐旧内核导航自动留白、顶栏/设置/二维码间距；不支持玻璃模糊仍按能力回退，字体/原生控件材质不声称跨内核像素相同。
+- Windows完整免安装目录为 `release/always-on-settings-20261018/win-unpacked/`，实际Yingji.exe隐藏隔离启动、遥控自动开启、真实preload/IPC、本地MP4解码/暂停、旧关闭请求及休眠/恢复保留连接通过。目录共72文件、400141984字节，旧包保留。
+- 正式APK为 `release/android-tv/yingji-tv-0.1.13.apk`，versionCode14，沿用原证书，1646066字节，SHA-256 `adadc8bf36b45452fd874a8baf0c429325ff7edaedec7000de798fd37929c005`。覆盖安装/启动成功，无DEBUGGABLE标记；正式/已测调试APK的全部assets与DEX一致，Windows22个构建文件及Android81个assets与当前产物一致，同名校验文件一致，证据在 `.tmp/always-on-package-integrity.json`。
+- 本轮79个新增/修改手写代码文件均不超300行，最大297行，无例外。修改的可见Electron手柄脚本仅同步分页入口，未启动前台窗口；实体手机Wi-Fi、系统键盘与实体电视仍由用户复测。
+
+## 2026-10-18 · 手机界面与设置操作复测包
+
+- 按用户五项实机反馈，将手机搜索改为search类型与明确字段并关闭自动完成，移除phone字段命名；手机主页改为单屏图标遥控，搜索/链接/快捷键设置由按钮打开模态卡片。普通按钮松手确认，移动/取消/失焦和迟到兼容click不执行；方向静止长按才连发。顶栏只保留搜索框一个焦点。设置选择框/滑条确认进入编辑后才接受方向修改，滚轮滚动、首次滑条点击/滑动不改值。
+- 桌面/安卓TypeScript、47文件299单元及生产构建通过。`renderer-setting-editing-smoke.mjs` 在1440×950与1920×1080验证单一搜索入口、空搜索回车打开键盘、确认进入/返回结束编辑、选择框滚轮不改值、滑条首次点击和滑动不改值。浏览分层、布局导航、七键遥控、文本光标、空格控制、拼音候选及无候选原样确认回归通过；修改的账号实播脚本只同步入口，未运行账号测试。
+- 手机联调覆盖320×568、390×640、844×390，无页面纵横溢出，底部工具可见；模态搜索字段、中文输入法确认不误提交、实际搜索/链接失败/取消/打开、图标快捷键、映射保存、滑动与迟到click取消、方向长按取消和断线不重放通过。已查看主页及输入卡片截图，证据在 `.tmp/renderer-phone-controller/`。浏览器固定视口与合成输入法事件不等同于iPhone系统键盘实测；联系人建议是否完全消失及实体触屏仍需用户复测。
+- Android9/WebView66.0.3359.158、显式隔离emulator-5556上，0.1.12调试APK验证原生桥、单一搜索焦点、设置确认编辑、新手机页面中文搜索及本地MP4实际解码/暂停通过，Activity后台仍撤销遥控。正式0.1.12覆盖安装/启动成功，versionCode13、无DEBUGGABLE标记，模拟器已停止，不接触实体设备或日常账号。
+- 本轮Windows免安装目录为 `release/phone-remote-ui-20261018/win-unpacked/`，实际Yingji.exe隐藏隔离启动、遥控指令和本地样片播放暂停检查通过；旧目录保留。正式APK为 `release/android-tv/yingji-tv-0.1.12.apk`，沿用原签名，1646063字节，SHA-256 `5a8624c5eb25f48589d9e28f8013df58d669cf8c35bc136823f8b1b4bcb67178`，同名校验文件一致。Windows22个构建文件、APK81个assets及DEX与当前构建一致，正式/已测调试APK的assets与DEX也逐项一致，证据在 `.tmp/phone-ui-package-integrity.json`。所有新增/修改手写代码均不超300行。
+
+## 2026-10-18 · 手机遥控实机测试交付
+
+- 按用户要求交付 Windows x64 免安装完整目录 `release/phone-remote-20261018/win-unpacked/`，入口 `Yingji.exe`。`package.json` Windows目标固定为dir，打包成功，未生成安装器、ZIP或portable自解压EXE，原Liquid Glass可运行目录保留。
+- 安卓交付 `release/android-tv/yingji-tv-0.1.11.apk` 与同名 `.sha256`，versionCode12，沿用旧0.1.10的签名证书，证书SHA-256为 `9762b35456dc2ff6170ec31f54101cbb277a3c757633813d53623c7a292a8a0b`；签名验证通过，正式APK无DEBUGGABLE标记。APK为1641967字节，SHA-256为 `3bae3cb855b5dd791b76e57e89713226c0a826d5070cbbcb2033ea77a5e73fe7`。旧APK保留。
+- 两端打包均执行类型检查与生产构建。对Windows ASAR中22个构建文件、APK中81个assets及classes.dex逐项比较当前构建，字节/摘要一致；两端均含完整手机页面资源。Windows完整目录72文件、400120577字节；完整性报告在 `.tmp/phone-package-integrity.json`。
+- `desktop-phone-controller-smoke.mjs` 增加 `YINGJI_EXECUTABLE` 参数，实际对新目录内Yingji.exe执行始终隐藏的隔离配置启动、preload/命名IPC、遥控菜单/返回/覆盖层拒绝、本地H.264 MP4解码与暂停、关闭监听检查，通过且未显示窗口。
+- 显式隔离emulator-5556在Android9/WebView66上覆盖安装正式0.1.11成功，启动返回ok，版本与非调试标志核对通过；已查看首页及设置截图。该正式包未开启CDP，手机端完整交互证据沿用上一节同源调试构建的隔离测试；没有连接实体电视或读取日常账号。本次模拟器检查不能替代用户的手机Wi-Fi及实体电视实测。
+
+## 2026-10-18 · 手机网页遥控
+
+- 桌面 TypeScript、安卓 TypeScript、47文件299单元及桌面生产构建通过；新增7项协议/HTTP测试覆盖有限操作、搜索/BV/HTTP输入、非法与超长参数、无凭据访问、精确Host/Origin、并发边界、结果错误反馈及关闭后旧密钥失效。推荐回归保持通过。
+- `renderer-phone-controller-smoke.mjs` 在1440×950与1920×1080的生产界面，以及390/320px手机页面，使用真实局域网HTTP服务配合隔离桌面/媒体夹具，验证设置开关与二维码、返回/暂停、中文搜索、链接校验/真实解析失败反馈、等待门控、取消与晚到来源释放、打开既有播放器、六个映射保存、滑动不误确认、失焦/长按取消、断开不重放及无横向溢出。截图已查看，证据在 `.tmp/renderer-phone-controller/`；不代表实体手机触屏或扫码相机测试。
+- `desktop-phone-controller-smoke.mjs` 使用全新隔离配置，Electron窗口始终隐藏，测试页固定前台文档可见性以启用遥控路径；实际preload/命名IPC/原生HTTP、设置与返回、覆盖层文本拒绝、原创本地H.264 MP4解码/暂停及关闭监听通过。媒体未收到Cookie，不读取日常账号；证据在 `.tmp/desktop-phone-controller/`。原七键 `renderer-remote-smoke.mjs` 两种视口回归通过。
+- Android9/API28、WebView66.0.3359.158的显式隔离 `emulator-5556` 安装测试APK，`android-phone-controller-smoke.mjs` 经ADB端口转发验证原生TCP服务与同一手机页面、授权/跨站拒绝、手机中文搜索接线、真实本地MP4解码/暂停，以及Activity进入后台撤销服务、恢复后仍关闭。搜索使用固定空列表，匿名账号，无B站账号请求；报告/截图在 `.tmp/android-phone-controller/`。该测试不等同于实体手机Wi-Fi、路由器防火墙、二维码相机或实体电视验收。
+- 功能开发阶段安卓只输出 `.tmp/android-test/` 调试测试APK，既有正式APK与Windows可运行目录未覆盖；随后按用户要求打包的交付见上节。所有新增/修改手写代码文件均在300行内，无行数例外。
+
 ## 2026-10-16 · 公开仓库准备
 
 - 整理公众 README，详细验证命令迁至开发指南，补充公开仓库维护及 Git 忽略规则，同步 AGENTS 与 CHANGELOG；未修改应用业务或构建逻辑。

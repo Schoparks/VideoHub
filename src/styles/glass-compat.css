@@ -1,0 +1,111 @@
+/* Old engines retain the same surfaces, tint, rim light and dimensions. */
+html[data-glass-material='fallback'] {
+  --glass-compat-panel: #f5f8ffb8;
+  --glass-compat-header: #f5f8ff8c;
+  --glass-compat-row: #ffffff73;
+}
+
+html[data-glass-material='fallback'][data-theme='dark'] {
+  --glass-compat-panel: #1c2534d1;
+  --glass-compat-header: #1c25348c;
+  --glass-compat-row: #1c223073;
+}
+
+html[data-glass-material='fallback'] .navigation-bar nav,
+html[data-glass-material='fallback'] .navigation-bar > .nav-item,
+html[data-glass-material='fallback'] .global-search,
+html[data-glass-material='fallback'] .tv-button,
+html[data-glass-material='fallback'] .input-hints,
+html[data-glass-material='fallback'] .working-pill,
+html[data-glass-material='fallback'] .modal,
+html[data-glass-material='fallback'] .modal-header,
+html[data-glass-material='fallback'] .modal-input-hints,
+html[data-glass-material='fallback'] .player-overlay > header,
+html[data-glass-material='fallback'] .player-bottom,
+html[data-glass-material='fallback'] .player .seek-preview,
+html[data-glass-material='fallback'] .player .episode-panel,
+html[data-glass-material='fallback'] .player .player-option-panel,
+html[data-glass-material='fallback'] .player .player-error {
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+
+html[data-glass-material='fallback'] .navigation-bar nav,
+html[data-glass-material='fallback'] .navigation-bar > .nav-item,
+html[data-glass-material='fallback'] .global-search,
+html[data-glass-material='fallback'] .tv-button,
+html[data-glass-material='fallback'] .input-hints,
+html[data-glass-material='fallback'] .working-pill {
+  background-color: var(--glass-fill);
+  background-image: linear-gradient(160deg, var(--glass-sheen), transparent 60%);
+}
+
+html[data-glass-material='fallback'] .modal {
+  background-color: var(--glass-compat-panel);
+  background-image: linear-gradient(145deg, var(--glass-sheen), transparent 30%, transparent 70%, var(--glass-sheen));
+}
+
+html[data-glass-material='fallback'] .modal-header,
+html[data-glass-material='fallback'] .modal-input-hints {
+  background-color: var(--glass-compat-header);
+  background-image: linear-gradient(160deg, var(--glass-sheen), transparent 70%);
+}
+
+html[data-glass-material='fallback'] .modal .setting-row {
+  background: var(--glass-compat-row);
+}
+
+html[data-glass-material='fallback'] .modal .setting-row:focus-within {
+  background: var(--surface-hover);
+}
+
+html[data-glass-material='fallback'] .app-shell[data-glass-blurred='true'] {
+  filter: blur(6px) saturate(112%);
+}
+
+/* Transparent control sheets preserve live video without filtering or reading frames. */
+html[data-glass-material='fallback'] .player-overlay > header,
+html[data-glass-material='fallback'] .player-bottom {
+  background-color: #09121f66;
+  background-image: linear-gradient(150deg, var(--glass-sheen), transparent 55%);
+}
+
+html[data-glass-material='fallback'] .player .episode-panel,
+html[data-glass-material='fallback'] .player .player-option-panel,
+html[data-glass-material='fallback'] .player .player-error,
+html[data-glass-material='fallback'] .player .seek-preview {
+  background-color: #152033cc;
+  background-image: linear-gradient(150deg, #ffffff0d, transparent 55%);
+}
+
+html[data-glass-material='fallback'] .navigation-bar > .nav-item.active,
+html[data-glass-material='fallback'] .tv-button[aria-pressed='true'] {
+  background-color: var(--accent-soft);
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  html[data-glass-material='fallback'] {
+    --glass-compat-panel: var(--glass-solid);
+    --glass-compat-header: var(--glass-solid);
+    --glass-compat-row: var(--surface);
+  }
+
+  html[data-glass-material='fallback'][data-theme='dark'] {
+    --glass-compat-panel: var(--glass-solid);
+    --glass-compat-header: var(--glass-solid);
+    --glass-compat-row: var(--surface);
+  }
+
+  html[data-glass-material='fallback'] .app-shell[data-glass-blurred='true'] {
+    filter: none;
+  }
+
+  html[data-glass-material='fallback'] .player-overlay > header,
+  html[data-glass-material='fallback'] .player-bottom,
+  html[data-glass-material='fallback'] .player .seek-preview,
+  html[data-glass-material='fallback'] .player .episode-panel,
+  html[data-glass-material='fallback'] .player .player-option-panel,
+  html[data-glass-material='fallback'] .player .player-error {
+    background: var(--glass-solid);
+  }
+}
