@@ -77,7 +77,7 @@ final class ControllerHttp {
         String headers = "HTTP/1.1 " + reply.status + " Response\r\nContent-Type: " + reply.mime
             + "\r\nContent-Length: " + reply.body.length + "\r\nConnection: close\r\nCache-Control: no-store"
             + "\r\nReferrer-Policy: no-referrer\r\nX-Content-Type-Options: nosniff"
-            + "\r\nContent-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; connect-src 'self';"
+            + "\r\nContent-Security-Policy: default-src 'none'; script-src 'self'; style-src 'self'; img-src data:; connect-src 'self';"
             + " frame-ancestors 'none'; base-uri 'none'; form-action 'self'\r\n\r\n";
         output.write(headers.getBytes(StandardCharsets.US_ASCII));
         output.write(reply.body);

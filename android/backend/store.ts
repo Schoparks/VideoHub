@@ -2,6 +2,7 @@ import { defaultPreferences, type HistoryEntry, type MediaItem } from '../../src
 import type { State } from '../../electron/storage/store';
 import { restorePgcHistory, restorePgcItem } from '../../electron/storage/pgc-references';
 import { native, persist } from './native';
+import { restoreBilibiliQuality } from '../../src/shared/bilibili-quality';
 export function historyKey(item: MediaItem, part?: HistoryEntry['part']) { return `${item.id}:${part?.id || item.cid || item.episodeId || ''}`; }
 
 export class Store {
@@ -18,6 +19,7 @@ export class Store {
       const value = JSON.parse(raw);
       if (value.version !== 1 || !['library', 'roots', 'history', 'queue'].every(key => Array.isArray(value[key]))) throw new Error();
       this.state = { ...value, preferences: { ...this.state.preferences, ...value.preferences } };
+      Object.assign(this.state.preferences, restoreBilibiliQuality(value.preferences));
       this.state.history = this.state.history.map(restorePgcHistory);
       this.state.queue = this.state.queue.map(restorePgcItem);
     } catch {

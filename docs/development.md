@@ -1,8 +1,14 @@
 # 开发与验证
 
+手机栏目与桌面共用`navigation`及`browse-sections`。栏目接线还运行`tests/phone-browse.test.ts`；`phone-browse-checks.mjs`随手机回归核对六个主栏目、动态/分区/影视筛选及五个个人分类。卡片检查可见视口中心、320/390px和横屏边界；测试夹具的快速遍历与写操作分阶段，等待HTTP突发配额恢复，不重放失败写入。
+
+手机控制台改动运行 `tests/phone-controller.test.ts`、`tests/phone-companion.test.ts`、`tests/phone-library.test.ts`、`tests/phone-history.test.ts`，以及 `node scripts/renderer-phone-controller-smoke.mjs`、`node scripts/desktop-phone-controller-smoke.mjs`。前者使用隔离夹具验证新标签页重连、独立搜索、封面显示、设置回滚与分类无滚动、播放参数/相关推荐、历史平台调用与本机新记录、切集/迟到播放不抢导航、卡片/气泡/返回顶部、电视扫码入口、收藏与队列失败反馈及横竖屏；后者使用始终隐藏的新Electron配置与本地样片验证真实命名桥、保存和解码。`node scripts/phone-review.mjs`生成带隔离样例标记的审阅截图，不作为真实账号验收。旧电视前端不得直接引入Zod；通过 `node scripts/android-web.mjs` 与原显式隔离模拟器流程验证，不把构建等同于实体手机/电视验收。
+
 修改前阅读 [协作规范](../AGENTS.md) 和 [变更记录](../CHANGELOG.md)。源码运行与平台要求见 [README](../README.md)，安卓构建见 [安卓电视说明](android-tv.md)。以下保留按职责划分的验证入口；历史结果见 [验收记录](verification.md)，不代表当前提交已重新执行。
 
 ## 常用验证
+
+`tests/bilibili-quality.test.ts` 覆盖B站点播上限、1080P各档、缺档回退、兼容MP4边界、权限及偏好迁移。构建后运行 `node scripts/renderer-bilibili-quality-smoke.mjs` 检查设置手柄/键盘操作、清晰度记忆、切集重选、保存回滚和取消；配合 `renderer-settings-parity-smoke.mjs`、`renderer-paused-quality-smoke.mjs`、`renderer-error-quality-smoke.mjs`。界面测试均为无窗口隔离夹具，不读取账号，不等于实体电视画质解码验收。
 
 `node scripts/renderer-window-restore-smoke.mjs` 交叉验证电视偏好/实际窗口全屏状态、重复播放、切换中退出和初始查询期间重复确认；`renderer-fullscreen-smoke.mjs`、`renderer-exit-smoke.mjs`、`renderer-preference-refresh-smoke.mjs` 保留原生事件、失败重试、退出回焦及设置排队合同。`renderer-glass-resize-smoke.mjs` 计数连续尺寸变化中的位移纹理编码并核对最终尺寸和媒体节点，均为无窗口夹具，不代表实体显示器转场帧率。
 

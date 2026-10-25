@@ -24,6 +24,7 @@ import { PlaybackPreparation } from './components/PlaybackPreparation';
 import { LibraryFeedback } from './components/LibraryFeedback';
 import { GlassOptics } from './components/GlassOptics';
 import { usePhoneController } from './hooks/usePhoneController';
+import { useCompanion } from './hooks/useCompanion';
 
 export default function App() {
   const preferencePending = useRef<() => boolean>(() => false);
@@ -31,6 +32,8 @@ export default function App() {
   const [route, setRoute] = useState<Route>('home');
   const [tab, setTab] = useState('recommend');
   const [dialog, setDialog] = useState<Dialog>(null);
+  const [phoneLogin, setPhoneLogin] = useState<{ type: 'app' | 'web'; revision: number }>();
+  useEffect(() => { if (dialog !== 'account') setPhoneLogin(undefined); }, [dialog]);
   const [selected, setSelected] = useState<MediaItem>();
   const [query, setQuery] = useState('');
   const [keyword, setKeyword] = useState('');
@@ -68,13 +71,19 @@ export default function App() {
     document.documentElement.style.setProperty('--card-columns', String(boot.preferences.cardColumns || 0));
   }, [boot.preferences]);
 
-  const { source, opening, play, openPlayback, closePlayer, next, nextKind, cancelOpening, cancelPending, canCancelOpening } = usePlayback({
+  const { source, opening, play, openPlayback, chooseQuality, closePlayer, next, nextKind, cancelOpening, cancelPending, canCancelOpening } = usePlayback({
     dialog,
     closeDialog: () => setDialog(null),
     queue: boot.queue,
     bootstrap,
     notify,
     focusedCard,
+    beforeResolve: preferenceActions.settled,
+    rememberQuality: quality => {
+      if (boot.preferences.bilibiliQualityMode === 'remember') {
+        changePreferences({ ...boot.preferences, bilibiliRememberedQuality: quality });
+      }
+    },
   });
   const focusBrowse = useBrowseFocus(`${route}:${tab}`, main, !!source || !!dialog || !!entry);
   const device = useInput(boot.preferences, action => {
@@ -165,7 +174,22 @@ export default function App() {
     navigate('search');
     setDialog(null);
   };
+  const companion = useCompanion({
+    boot, ready, blocked: !!dialog || !!entry, opening, source, player,
+    accountScreen: dialog === 'account', queue: queueActions.update, collectionChanged: feed.collectionChanged,
+    login: operation => {
+      if (operation === 'close') { if (dialog === 'account') setDialog(null); return; }
+      setPhoneLogin(previous => ({ type: operation, revision: (previous?.revision || 0) + 1 }));
+      setDialog('account');
+    },
+    change: changePreferences,
+    play: async item => {
+      const result = await openPlayback(item);
+      return result === 'opened' ? {} : { error: result };
+    },
+  });
   usePhoneController({
+    companion,
     blocked: !ready || !!source || !!dialog || !!entry,
     opening,
     search,
@@ -221,15 +245,16 @@ export default function App() {
           settings={() => setDialog('settings')}
           toggleDanmaku={() => void changePreferences({ ...boot.preferences, danmaku: !boot.preferences.danmaku })}
           blocked={!!dialog || !!entry}
-          next={next} nextKind={nextKind} queue={() => setDialog('queue')} episode={part => play(source.item, part, source.quality)}
-          quality={(quality, position) => play(source.item, source.part, quality, position)} notify={notify}
-          reload={position => play(source.item, source.part, source.quality, position)}
+          next={next} nextKind={nextKind} queue={() => setDialog('queue')} episode={part => openPlayback(source.item, part)}
+          quality={chooseQuality} notify={notify}
+          reload={position => openPlayback(source.item, source.part, source.quality, position)}
         />
       )}
       {dialog && (
         <AppDialogs
           key={dialog}
           dialog={dialog} boot={boot} selected={selected} opening={opening} device={device}
+          phoneLogin={phoneLogin}
           queueBusy={queueActions.busy}
           isWatchLater={selected ? feed.watchLaterState(selected.id) ?? (route === 'mine' && tab === 'watchlater') : false}
           queue={queue} query={query} url={url}

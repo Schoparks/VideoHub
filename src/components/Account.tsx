@@ -1,15 +1,18 @@
 import { Check, Smartphone, Monitor, RefreshCw, ShieldCheck, LogOut } from 'lucide-react';
 import type { AccountStatus } from '../shared/types';
 import { useAccountLogin } from '../hooks/useAccountLogin';
+import { useEffect } from 'react';
 
 interface AccountProps {
+  initial?: { type: 'app' | 'web'; revision: number };
   account: AccountStatus;
   update: (account: AccountStatus) => void;
   notify: (message: string) => void;
 }
 
-export function Account({ account, update, notify }: AccountProps) {
+export function Account({ account, update, notify, initial }: AccountProps) {
   const { qr, status, busy, error, operation, start, logout } = useAccountLogin(update, notify);
+  useEffect(() => { if (initial) void start(initial.type); }, [initial]);
   const refreshType = qr?.type || (operation === 'app' || operation === 'web' ? operation : undefined);
 
   return (

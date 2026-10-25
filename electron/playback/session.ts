@@ -10,6 +10,7 @@ import { HistorySync } from './history-sync';
 import { resumePosition } from '../../src/shared/playback-progress';
 import { fetchDanmaku } from '../providers/bilibili-danmaku';
 import type { VideoSupport } from './dash-video';
+import { allowedBilibiliQualities, requestedBilibiliQuality } from '../../src/shared/bilibili-quality';
 
 interface Session {
   item: MediaItem;
@@ -32,7 +33,7 @@ export class PlaybackSessions {
     private loadDanmaku: typeof fetchDanmaku = fetchDanmaku,
     private resolveUrl: UrlMediaResolver = resolveDirectUrl,
     private videoSupport?: VideoSupport) {}
-  async resolve(input: MediaItem, part?: MediaPart, requestedQuality = 127): Promise<PlaybackSource> {
+  async resolve(input: MediaItem, part?: MediaPart, explicitQuality?: number): Promise<PlaybackSource> {
     let item = input, url: string, format: PlaybackSource['format'] = 'file', qualities, quality, notice;
     let parts: MediaPart[] = [];
     let videoCodec: PlaybackSource['videoCodec'];
@@ -63,17 +64,29 @@ export class PlaybackSessions {
             : parts.find(p => (input.episodeId !== undefined && p.episodeId === input.episodeId) || (input.cid !== undefined && p.cid === input.cid)) || parts[0];
           if (!part) throw new Error('这集已不可用，请重新打开视频选择其他分集');
         }
+        const preferences = this.store.state.preferences;
+        const requestedQuality = input.kind === 'live' ? explicitQuality ?? 127
+          : requestedBilibiliQuality(preferences, explicitQuality);
         const data = await this.bili.play(item, part, requestedQuality);
         notice = data.playbackNotice;
         if (data.liveUrl) { url = register(data.liveUrl); format = data.format; }
         else if (data.dash) {
-          const mpd = buildDashManifest(data.dash, register, requestedQuality, this.videoSupport);
+          // Filter before manifest selection: its lowest-track fallback must never bypass the cap.
+          const dash = { ...data.dash, video: allowedBilibiliQualities(data.dash.video || [], preferences) };
+          if (!dash.video.length) throw new Error('此视频没有符合 B 站清晰度上限的可播放画质');
+          const choice = explicitQuality ?? (preferences.bilibiliQualityMode === 'remember'
+            ? preferences.bilibiliRememberedQuality || 127 : 127);
+          const mpd = buildDashManifest(dash, register, choice, this.videoSupport);
           quality = mpd.quality;
           videoCodec = mpd.codec;
           videoCapabilities = mpd.capabilities;
           url = this.gateway.register({ session: sessionId, text: mpd.manifest, mime: 'application/dash+xml' }); format = 'dash';
-          qualities = playbackQualities(data, this.videoSupport);
+          qualities = playbackQualities({ ...data, dash }, this.videoSupport);
         } else {
+          if (preferences.bilibiliMaxQuality && (!Number(data.quality)
+            || !allowedBilibiliQualities([{ id: Number(data.quality) }], preferences).length)) {
+            throw new Error('平台未返回符合 B 站清晰度上限的可播放画质');
+          }
           if (data.durl.length !== 1) throw new Error('此内容返回旧式多段流，暂请使用官方播放入口');
           url = register(data.durl[0].url); format = /\.flv(?:$|\?)/i.test(data.durl[0].url) ? 'flv' : 'file';
           quality = data.quality; qualities = playbackQualities(data);

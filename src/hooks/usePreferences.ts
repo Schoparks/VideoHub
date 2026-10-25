@@ -10,6 +10,7 @@ export function usePreferences(value: Preferences, changed: (value: Preferences)
   // An idle authoritative refresh also becomes the rollback base.
   if (!pending.current) saved.current = value;
   const change = (next: Preferences) => {
+    let success = false;
     const token = ++revision.current;
     pending.current++;
     changed(next);
@@ -18,6 +19,7 @@ export function usePreferences(value: Preferences, changed: (value: Preferences)
       try {
         await api.preferences(next);
         saved.current = next;
+        success = true;
       } catch (error) {
         if (token === revision.current) changed(saved.current);
         notify(message(error));
@@ -31,6 +33,15 @@ export function usePreferences(value: Preferences, changed: (value: Preferences)
         }
       }
     }).finally(() => { pending.current--; });
+    return sequence.current.then(() => success);
   };
-  return { change, isPending: () => pending.current > 0 };
+  const settled = async () => {
+    // Include writes queued while an earlier save is still in flight.
+    let current;
+    do {
+      current = sequence.current;
+      await current;
+    } while (current !== sequence.current);
+  };
+  return { change, settled, isPending: () => pending.current > 0 };
 }

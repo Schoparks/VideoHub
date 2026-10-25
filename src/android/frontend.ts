@@ -22,7 +22,7 @@ if (window.HubBridge) {
     else request.resolve(reply.value);
   };
   const names = [
-    'bootstrap', 'browse', 'folders', 'detail', 'login', 'pollLogin', 'cancelLogin', 'logout',
+    'bootstrap', 'browse', 'folders', 'detail', 'related', 'login', 'pollLogin', 'cancelLogin', 'logout',
     'addLocal', 'rescan', 'openUrl', 'resolve', 'cancelUrlResolution', 'release', 'progress',
     'danmaku', 'watchLater', 'favorite', 'queue', 'preferences', 'fullscreen', 'getFullscreen', 'openOfficial',
     'controllerStatus', 'controllerEnable', 'controllerReply',

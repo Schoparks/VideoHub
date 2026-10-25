@@ -1,6 +1,6 @@
 import { contextBridge, ipcRenderer } from 'electron';
 const methods = ['bootstrap','browse','folders','detail','login','pollLogin','cancelLogin','logout','addLocal','rescan','openUrl','resolve','cancelUrlResolution','release','progress','danmaku','watchLater','favorite','queue','preferences','fullscreen','getFullscreen','openOfficial',
-  'controllerStatus', 'controllerEnable', 'controllerReply'] as const;
+  'related', 'controllerStatus', 'controllerEnable', 'controllerReply'] as const;
 const api = Object.fromEntries(methods.map(name => [name, async (...args: unknown[]) => {
   const reply = await ipcRenderer.invoke(`hub:${name}`, args);
   if (!reply.ok) throw new Error(reply.error);

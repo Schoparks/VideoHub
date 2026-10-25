@@ -1,6 +1,9 @@
 .phone-sheet {
   position: fixed;
   margin: 0 auto;
+  top: 50%;
+  bottom: auto;
+  transform: translateY(-50%);
   width: min(420px, calc(100% - 24px));
   padding: 18px;
   color: inherit;
@@ -9,10 +12,14 @@
   border-radius: 22px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  scroll-padding-top: 80px;
+  scroll-padding-bottom: 12px;
 }
 .phone-sheet::backdrop { background: #0c142e70; }
 .phone-sheet header { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 12px; }
-.phone-sheet h2 { margin: 0; font-size: 19px; }
+.phone-sheet > header { position: sticky; top: -18px; z-index: 2; background: var(--surface); padding: 12px 0; }
+.phone-sheet h2 { margin: 0; font-size: 19px; flex: 1; }
+.sheet-back { display: grid; place-items: center; width: 40px; padding: 0; border: 0; background: transparent; }
 .sheet-close { display: grid; place-items: center; width: 42px; padding: 8px; }
 .send-form label { display: block; font-size: 13px; margin-bottom: 8px; }
 .send-form input {

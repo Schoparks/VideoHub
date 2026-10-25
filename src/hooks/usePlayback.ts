@@ -14,10 +14,14 @@ interface PlaybackOptions {
   bootstrap: () => Promise<void>;
   notify: (message: string) => void;
   focusedCard: RefObject<HTMLElement | null>;
+  beforeResolve: () => Promise<void>;
+  rememberQuality: (quality: number) => void;
 }
 
 export function usePlayback(options: PlaybackOptions) {
   const { dialog, closeDialog, queue, bootstrap, notify, focusedCard } = options;
+  const callbacks = useRef(options);
+  callbacks.current = options;
   const [source, setSource] = useState<PlaybackSource>();
   const [opening, setOpening] = useState(false);
   const playbackRequest = useRef(0);
@@ -79,6 +83,8 @@ export function usePlayback(options: PlaybackOptions) {
     try {
       const item = typeof input === 'function' ? await input() : input;
       if (token !== playbackRequest.current) return 'canceled' as const;
+      if (item.source === 'bilibili' && item.kind !== 'live') await callbacks.current.beforeResolve();
+      if (token !== playbackRequest.current) return 'canceled' as const;
       const resolved = await api.resolve(item, part, quality);
       if (token !== playbackRequest.current) {
         await api.release(resolved.sessionId);
@@ -102,6 +108,15 @@ export function usePlayback(options: PlaybackOptions) {
   };
   const play = async (...args: Parameters<typeof openPlayback>) => { await openPlayback(...args); };
 
+  const chooseQuality = async (quality: number, position: number, same = false) => {
+    const current = sourceRef.current;
+    if (!current || playPending.current) return 'busy' as const;
+    const result = same ? 'opened' : await openPlayback(current.item, current.part, quality, position);
+    if (result === 'opened' && sourceRef.current
+      && current.item.source === 'bilibili' && !current.live) callbacks.current.rememberQuality(quality);
+    return result;
+  };
+
   const closePlayer = async () => {
     cancelPending();
     const token = playbackRequest.current;
@@ -117,35 +132,34 @@ export function usePlayback(options: PlaybackOptions) {
   };
 
   const next = async () => {
-    if (!source) return;
+    if (!source) return 'unavailable' as const;
     const token = playbackRequest.current;
     let target = nextPlaybackTarget(source, queue);
     if (target?.kind === 'unknown') {
       try {
         const parts = (await api.detail(source.item)).parts;
-        if (token !== playbackRequest.current || sourceRef.current?.sessionId !== source.sessionId) return;
+        if (token !== playbackRequest.current || sourceRef.current?.sessionId !== source.sessionId) return 'canceled' as const;
         const knownSource = { ...sourceRef.current, parts };
         sourceRef.current = knownSource;
         setSource(knownSource);
         target = nextPlaybackTarget(knownSource, queue);
       } catch (error) {
         if (token === playbackRequest.current) notify(message(error));
-        return;
+        return token === playbackRequest.current ? 'failed' as const : 'canceled' as const;
       }
     }
     if (target?.kind === 'episode') {
-      await play(source.item, target.part, source.quality, 0);
-      return;
+      return openPlayback(source.item, target.part, undefined, 0);
     }
     if (target?.kind === 'queue') {
-      await play(target.item);
-      return;
+      return openPlayback(target.item);
     }
     notify('已经是最后一项');
+    return 'unavailable' as const;
   };
 
   return {
-    source, opening, setOpening, play, openPlayback, closePlayer, next, cancelOpening, cancelPending,
+    source, opening, setOpening, play, openPlayback, chooseQuality, closePlayer, next, cancelOpening, cancelPending,
     nextKind: nextPlaybackTarget(source, queue)?.kind,
     canCancelOpening: opening && playPending.current && !source,
   };

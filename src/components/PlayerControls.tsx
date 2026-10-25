@@ -8,6 +8,7 @@ import type { NextPlaybackKind } from '../shared/playback-next';
 
 interface Props {
   source: PlaybackSource;
+  qualityAvailable: boolean;
   parts: MediaPart[];
   partIndex: number;
   paused: boolean;
@@ -86,6 +87,7 @@ export function PlayerControls(props: Props) {
           )}
           {!!source.qualities?.length && (
             <button className="player-choice-button" aria-label="清晰度" aria-haspopup="dialog"
+              disabled={!props.qualityAvailable}
               data-option-value={source.quality}
               data-player-choice="quality" aria-disabled={blocked || undefined} data-focus-retain
               onClick={event => props.options('quality', event.currentTarget)}>

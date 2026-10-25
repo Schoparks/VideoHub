@@ -1,6 +1,7 @@
 import type { Preferences } from '../shared/types';
 import { CardLayoutSetting } from './CardLayoutSetting';
 import { PlaybackSettings } from './PlaybackSettings';
+import { BilibiliQualitySettings } from './BilibiliQualitySettings';
 
 interface Props {
   value: Preferences;
@@ -22,6 +23,7 @@ export function ViewingSettings({ value, change }: Props) {
       </label>
       <CardLayoutSetting value={value} change={change} />
       <PlaybackSettings value={value} change={change} />
+      <BilibiliQualitySettings value={value} change={change} />
       <label className="setting-row">
         <span><b>同步 B 站播放历史</b><small>同步至 B 站，本机进度始终保留</small></span>
         <input type="checkbox" role="switch" aria-label="同步 B 站播放历史" checked={value.syncHistory}

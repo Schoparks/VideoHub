@@ -1,7 +1,9 @@
 import type { VideoCapability, VideoCodec } from './video-capability';
 import type { ControllerReply, ControllerRequest, ControllerStatus } from './remote-control';
+import { defaultBilibiliQuality, type BilibiliQualityPreferences } from './bilibili-quality';
 
 export type Source = 'bilibili' | 'local' | 'url';
+export type PlaybackOpenResult = 'opened' | 'failed' | 'canceled' | 'busy' | 'unavailable';
 export interface MediaItem {
   id: string; source: Source; kind: 'video' | 'live' | 'season'; title: string;
   cover?: string; author?: string; duration?: number; description?: string; badge?: string;
@@ -37,7 +39,7 @@ export interface PlaybackSource {
 export interface HistoryEntry { item: MediaItem; part?: MediaPart; position: number; duration: number; updatedAt: number }
 export interface LocalImportResult { library: MediaItem[]; canceled: boolean; found: number; added: number }
 export interface DanmakuComment { id: string; time: number; mode: 1 | 4 | 5 | 6; text: string; color: string }
-export interface Preferences {
+export interface Preferences extends BilibiliQualityPreferences {
   tvMode: boolean; cardColumns: number; playbackRate: number; syncHistory: boolean; autoNext: boolean;
   /** Legacy storage field; player output gain stays at 1 and volume belongs to the TV/system. */
   volume: number;
@@ -45,6 +47,7 @@ export interface Preferences {
   theme: 'light' | 'dark'; deadzone: number; gamepadMap: Record<string, number>;
 }
 export const defaultPreferences: Preferences = {
+  ...defaultBilibiliQuality,
   tvMode: false, volume: 1, cardColumns: 0, playbackRate: 1, syncHistory: true, autoNext: true,
   danmaku: false, danmakuOpacity: .8, danmakuFontSize: 25, danmakuArea: .5,
   theme: 'light', deadzone: 0.28,
@@ -60,6 +63,7 @@ export interface HubApi {
   browse(request: BrowseRequest): Promise<Page>;
   folders(): Promise<Folder[]>;
   detail(item: MediaItem): Promise<MediaDetail>;
+  related?(item: MediaItem): Promise<Page>;
   login(type: 'app' | 'web'): Promise<QRLogin>;
   pollLogin(id: string): Promise<LoginPoll>;
   cancelLogin(id: string): Promise<void>;

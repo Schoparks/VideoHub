@@ -71,7 +71,7 @@ describe('authenticated playback and quality', () => {
   });
   it('retains high resolution AV1 tracks and lists only genuinely playable qualities', () => {
     const data = { dash: { duration: 30, video: [track(32), track(80, 'av01.0.08M.08'), track(120, 'hev1.1.6.L153.B0')] }, support_formats: [{ quality: 80, new_description: '1080P 高清' }, { quality: 120, new_description: '4K' }] };
-    expect(playbackQualities(data)).toEqual([{ id: 80, label: '1080P 高清' }, { id: 32, label: '480P' }]);
+    expect(playbackQualities(data)).toEqual([{ id: 80, label: '1080P' }, { id: 32, label: '480P' }]);
     const result = buildDashManifest(data.dash, x => x, 127);
     expect(result.quality).toBe(80); expect(result.manifest).toContain('av01.0.08M.08');
     expect(result.manifest).not.toContain('hev1');

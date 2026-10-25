@@ -18,6 +18,7 @@ import { MediaGateway } from './gateway';
 import { LocalLibrary } from './library';
 import { androidVideoSupport } from './video-support';
 import { controllerApi } from './controller';
+import { relatedBilibili } from '../../electron/providers/bilibili-related';
 
 installFetch();
 const vault = new Vault();
@@ -67,6 +68,7 @@ const api: Omit<HubApi, 'onSuspend' | 'onFullscreen'> = {
     return { ...store.state, account: account.status(), platform: 'android', version: __YINGJI_ANDROID_VERSION__, notice: store.notice };
   },
   browse: request => bili.browse(request), folders: () => bili.folders(),
+  related: item => relatedBilibili(account, item),
   detail: item => item.source === 'bilibili' ? bili.detail(item) : Promise.resolve({ item, parts: [], description: item.description || '' }),
   login: type => account.start(type), pollLogin: id => account.poll(id),
   cancelLogin: async id => { account.cancel(id); },

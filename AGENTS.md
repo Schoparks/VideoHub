@@ -13,6 +13,7 @@
 - 修改应围绕用户需求，保留已有工作；不顺带改变推荐规则、播放顺序、授权方式等产品行为。
 - 仅修改源文件；`node_modules/`、`dist/`、`dist-electron/`、`release/` 是依赖或产物，不手工修补。临时媒体、隔离测试配置和截图放在 `.tmp/`。
 - Windows 始终交付免安装的 `win-unpacked` 完整可运行目录，`package.json` 的 Windows 目标固定为 `dir`，不生成 ZIP、NSIS 安装器或 portable 自解压 EXE；用户另要求安卓电视 APK，使用 `pnpm package:android` 输出 `release/android-tv/`，不把 Electron 包改名为 APK。
+- 后续每次新版交付，在构建、必要验证和产物完整性校验通过后，清理已被替代的旧版本包及其配套校验文件，每个平台只保留最新可用交付包；新版失败时保留上一可用版本。此清理已获用户长期授权，无须逐次确认。删除前核对目标绝对路径均位于项目产物目录，保留最新包、签名密钥、用户数据、源码和验证记录；不把整个 `release/` 目录作为无差别删除目标。
 - 安卓电视以方向、中键、菜单、返回七键完成操作，与桌面共用界面、设置分类和样式，同一字号模式保持同一布局；默认电视字号但可切换，原生窗口始终横屏全屏。纯展示 Logo、标题和来源信息不占焦点，完整正文滚动入口保留。能力及安装边界见 [安卓电视说明](docs/android-tv.md)。
 - 网页预览没有桌面账号、磁盘及媒体能力；不得用虚构推荐、登录状态或播放结果掩盖缺失能力。
 
@@ -106,11 +107,17 @@
 | `CardLayoutSetting`、`styles/card-layout.css` | 呈现自动或每行 2–6 个卡片的即时设置；显式选择覆盖桌面/电视默认列数，共用网格，不改推荐合同。 |
 | `src/api.ts` | 类型化桌面 API 入口与网页预览适配，不提供伪造业务数据。 |
 | `src/input/remote.ts`、`src/android/frontend.ts` | 分别校验七键遥控动作/上下文提示，以及命名 HubApi RPC、暂停/全屏事件与受限封面路径；复用活动范围、语义处理与回焦，不另写播放或推荐规则。 |
-| `shared/remote-control`、`usePhoneController`、`src/phone/` | 分别约束手机操作契约、原生指令接线及独立手机页面。方向/确认/快捷键复用 useInput，搜索复用原搜索合同，链接复用 usePlayback.openPlayback 的有限打开结果。等待/弹窗/播放中的文本提交明确失败，不抢占当前任务；手机快捷键只保存在手机，不持久化连接密钥、不自动重放失败操作。 |
+| `shared/remote-control`、`companion-command`、`companion-schema` | 约束手机有限命令及显示数据；前端使用轻量校验，Zod仅在已有后端兼容注入下使用，不把BigInt依赖引入旧电视前端。IPC结果剔除额外字段，不向手机发送账号、路径、媒体地址或通用API。手机号等无关数据不采集。 |
+| `useCompanion`、`companion-catalog`、`player-companion` | 分别编排手机请求、注册有界媒体句柄/受限封面、适配现有播放器。手机浏览/搜索不改电视路由，推荐沿用原Provider合同；账号变化撤销句柄和手机列表。播放替换先经既有transition保存进度，检查会话、覆盖层、操作代次；切片/画质/重试回复实际打开结果。设置沿原串行保存并反馈失败，不抢占电视未结束的覆盖层。 |
+| `usePhoneController`、`src/phone/` | 原按键复用useInput；独立手机页面以浏览、播放、设置、按键分区。已配对连接密钥按浏览器同源本地保存，以支持新标签页重访；401或主动忘记时清除，应用重启仍换密钥，断线不重放操作。 |
+| `bilibili-related`、`HubApi.related` | 只读普通视频下的相关推荐，复用平台HTTP与标准视频字段，保留服务端顺序；与App首页推荐会话分离，不把相关推荐加入自动播放队列。命名能力同步桌面与安卓白名单及IPC模式。 |
 | `electron/remote/`、安卓 `PhoneController`/`ControllerHttp` | 独立、随应用常开的局域网 HTTP 服务，只提供打包遥控资源、状态探测和有限命令；启动及网络重试不依赖设置页。随机会话密钥经二维码片段交付，命令使用请求头授权并校验 Host/Origin/内网地址及大小/时限/并发；不开放通用 IPC、账号、文件或媒体代理。暂停只取消等待操作，保留连接，后台不接受指令；退出销毁服务，再次启动换密钥。Android 原生端仅向本机 UI 派发事件，结果经受校验的命名桥返回。 |
 | `PhoneControllerSetting`、`useControllerPairing`、`scripts/build-remote.mjs` | 分别呈现地址选择/二维码/连接重试、管理异步状态及二维码生命周期、为桌面与安卓生成同一独立手机资源；不提供关闭开关。设置组件不访问网络或平台凭证，网页预览不伪造遥控能力。 |
 | `Settings`、`ViewingSettings`、`settings-navigation` | 设置按观看、弹幕、手机遥控、手柄分组，仅挂载当前面板；两端共用控件，方向只移动分类焦点，确认切换，上下进入内容和返回当前分类。不改变即时保存及失败回滚，原生不支持的窗口全屏能力保留同位置禁用入口。 |
-| `src/phone/PhoneSheet`、`SendForm`、`ControlButton`、`usePointerClickGuard` | 手机主页固定一屏，文本输入/快捷键配置仅在原生模态卡片内编辑，按可见视口约束键盘避让并返回原入口；搜索使用明确字段和search语义，避免phone字段触发联系人启发式。普通按钮松手提交、方向延迟长按，移动/取消/失焦撤销，兼容click不得补发触摸动作；不读取联系人、不截获系统键盘。 |
+| `src/phone/PhoneToolbar`、`PhoneSheet`、`PhoneSettings` | 顶栏复用navigation六个主栏目，窄屏横向滚动，固定搜索/历史/工具图标，无底栏；搜索及工具通过居中卡片打开，返回回工具、关闭回原页面。设置按观看/弹幕/界面仅挂载当前组，目标手机横竖屏无需滚动。卡片按可见视口居中、避让键盘并恢复入口，长内容在卡片内滚动；保存沿原偏好通道。 |
+| `browse-sections`、`PhoneBrowseFilters`、`companion-dynamics` | 桌面和手机共用二级分类定义，手机筛选只调用既有Provider，不改变电视路由或推荐顺序。动态完整正文/转发及视频通过显示契约返回，配图用独立有界只读句柄，经既有受限图片通道读取，不能当作可播放媒体；账号变化撤销句柄。 |
+| `src/phone/usePhoneView`、`PhoneHistory` | 前者管理首页/播放页独立滚动位置与导航代次，开始播放进入控制页，已最小化后切集不抢回，迟到播放不覆盖新操作；后者分开平台历史与新读取的本机历史。本机读取不提交App初始化快照，历史句柄保留分集，不修改播放顺序。 |
+| `src/phone/connection`、`SendForm`、`ControlButton`、`usePointerClickGuard` | 仅目录/收藏夹/相关推荐读取串行，写入及失败动作不重放；只读结果不额外触发状态刷新。搜索使用明确字段和search语义。普通按钮松手提交、方向延迟长按，移动/取消/失焦撤销，兼容click不得补发触摸动作；不读取联系人、不截获系统键盘。 |
 | `android/backend/` | 隔离 WebView 中复用现有 Provider、账号、IPC 模式和播放会话，以平台适配替换 Node 存储、网络、媒体网关；禁止分叉推荐合同或暴露凭证给 UI。第三方网页检测尚未移植，明确失败，不伪造成功。 |
 | `HttpFailure`、`shared/connection-failure`、`android/backend/abort-signals` | 原生 HTTP 仅传有限 DNS/TLS/超时/连接失败类别；协议层就地呈现，不泄露原始异常、地址或凭证，不关闭证书验证。旧信号保留超时身份并传递组合原因，主动取消仍为 AbortError。模拟器电脑 DNS/代理与实体电视不同，不以模拟器联网成功断言电视网络故障或问题已修复。 |
 | `HttpBody`、`SizedStream`、`src/android/dash-range` | 原生 HTTP 解压 gzip/raw或zlib deflate 后仍执行原字节限额，移除编码/压缩长度头，HEAD/无正文不解压。Android DASH Range 仅转换已注册本机媒体地址的参数，网关验证后按同一范围请求上游，不把本机参数转发、不增加任意 URL 能力；避免旧 WebView 重复 Range 定位。已知远端流报告可用长度，保持释放关闭与无 Cookie 边界。 |
@@ -140,6 +147,8 @@
 | `electron/accounts/` | 扫码、令牌刷新、授权失效与安全凭证存储；处理过期异步请求及退出登录竞态。 |
 | `electron/protocol/` | 平台 HTTP 与签名协议，统一超时、错误与请求边界。 |
 | `electron/playback/session.ts` | 播放会话生命周期、解析与进度协调。 |
+| `shared/bilibili-quality`、`BilibiliQualitySettings` | 分别定义 B 站点播清晰度上限/选择策略的纯契约与「观看」设置控件；1080P/高码率/60帧保留独立qn身份，上限按分辨率分组，同分辨率沿实际来源顺序，不按数字大小排序优劣；旧112/116上限迁移到80，74迁移到64。PlaybackSessions按已保存偏好约束请求、实际DASH候选和返回菜单，兼容MP4超限/未知画质明确失败；不以accept_quality虚构权限，不影响直播、本地或直链。新视频/切集按分辨率自动或精确记忆重新选择，重试保留明确画质但仍受上限约束。 |
+| `usePlayback.chooseQuality`、`usePreferences.settled` | 仅成功且未取消的手动选择在记忆模式下经原串行偏好保存通道记录；确认当前画质可记忆但不重载媒体，自动缺档回退不覆盖记忆，保存失败正常回滚。解析前等待已有偏好写入并重新核对操作代次，取消后的等待不得发出播放请求；设置不主动重载正在播放的媒体。 |
 | `electron/playback/history-sync.ts` | 平台进度后台串行回写，合并等待中的同分集位置；不得阻塞本机保存、返回或切集。 |
 | `electron/providers/bilibili-danmaku.ts`、`src/shared/danmaku-layout.ts` | 分别负责受限匿名 XML 弹幕读取、按媒体时间排布；仅允许有效播放会话请求弹幕，不转发凭证。 |
 | `electron/playback/dash.ts`、`gateway.ts` | 分别负责可播放 DASH 清单、受限媒体网关及 Range/HLS 转发。 |
@@ -154,6 +163,13 @@
 | `tests/`、`scripts/` | 单元回归和隔离冒烟；测试按行为及职责拆分，默认不接触日常账号配置；获明确授权的账号实测仅使用隔离加密副本。 |
 
 新增桌面能力时，必须同步维护 `src/shared/types.ts` 中的 `HubApi`、IPC 参数模式、preload 白名单及主进程绑定。主进程继续校验调用窗口、主框架和可信来源；渲染器不得获得 Node 权限。
+
+## 手机收藏、队列与电视授权入口
+
+- `companion-library` 维护账号隔离的收藏夹句柄，通过既有favorite/watchLater与collectionChanged提交操作；`companion-queue` 计算明确的单项队列变更，经useQueueActions保存。不接收手机传入的平台ID/本地路径。失败不报告成功，账号变化撤销旧句柄与晚到读取。
+- `PhoneLibrary`、`PhoneMediaActions` 分别负责收藏夹/队列卡片和视频操作卡片；`PhoneCover` 只加载受限封面；`PhonePlayerOptions` 通过已有播放指令确认参数，不另建播放生命周期。
+- `tv-login` 仅允许app/web/close，接线到电视既有Account/useAccountLogin。二维码、登录轮询与凭证留在电视；手机仅取得两个连接布尔状态及电视面板是否打开，不提供手机登录/注销/账号API。
+- `tests/phone-library.test.ts` 验证句柄撤销、迟到读取、平台写入失败与队列保持；`phone-library-checks.mjs` 随手机回归验证卡片、气泡、返回顶部及电视二维码，不对真实账号写入。
 
 ## B 站推荐：严格对齐 BewlyCat
 
@@ -240,6 +256,8 @@
 - 加载、空数据、失败和授权缺失分别呈现；有内容时请求失败保留列表与就地重试，不把错误伪装为空数据，也不添加重复状态说明。
 
 ## 验证与交付
+
+- `tests/bilibili-quality.test.ts` 核对1080P同分辨率分组、来源顺序、精确记忆及缺档回退、DASH与MP4上限、权限及存储迁移；`renderer-bilibili-quality-smoke.mjs` 用无窗口隔离夹具验证两个目标视口的设置、手柄/键盘、菜单上限、切集重选、失败回滚与等待取消。结合既有设置双端布局、暂停切画质及错误恢复回归，不把夹具或构建当作实体电视解码验证。
 
 - `Player` 的 video 与弹幕层按播放会话标识重建；旧元素清理只作用于旧媒体，新元素不能继承迟到 error/ended/pause。`renderer-media-session-smoke.mjs` 以模拟媒体核对切 P 旧事件隔离及暂停切画质精确恢复。`android-multipart-smoke.mjs` 要求显式隔离 emulator 与公开 BV 号，验证前三 P 独立元素、CID、真实音视频解码；只用匿名账号，不能代替会员画质或实体电视验证。
 - 弹幕滚动仍由合成线程驱动；主线程最多每50ms更新入场/离场，动画漂移读取最多每0.5媒体秒一次。暂停、缓冲、速度及跳转事件立即同步，卸载解除监听；不得通过降低画质、删除来源弹幕或逐帧 React 更新掩盖卡顿。

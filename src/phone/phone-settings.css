@@ -1,0 +1,34 @@
+.phone-sheet.phone-settings-sheet { width: min(680px, calc(100% - 24px)); padding: 16px; }
+.phone-settings-sheet > header { padding: 0; margin-bottom: 12px; position: static; }
+.phone-setting-tabs { display: flex; gap: 4px; padding: 4px; border-radius: 12px; background: color-mix(in srgb, var(--border) 40%, var(--surface)); }
+.phone-setting-tabs button { flex: 1; border: 0; min-height: 40px; border-radius: 9px; background: transparent; font-size: 14px; }
+.phone-setting-tabs [aria-pressed="true"] { background: var(--surface); box-shadow: 0 1px 4px #00000012; font-weight: 650; }
+.phone-settings .phone-setting-fields { margin: 8px 0 0; padding: 0; border: 0; display: grid; min-width: 0; }
+.phone-settings .phone-field { min-height: 52px; gap: 10px; padding: 4px 0; font-size: 14px; }
+.phone-settings .phone-field:last-child { border: 0; }
+.phone-settings .phone-field select { max-width: 58%; min-height: 40px; padding: 7px; border: 0; background: transparent; text-align: right; font-size: 14px; }
+.phone-settings .phone-field input[role="switch"] {
+  appearance: none;
+  flex-shrink: 0;
+  position: relative;
+  width: 42px;
+  height: 26px;
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  background: var(--border);
+  margin: 0 3px;
+}
+.phone-settings input[role="switch"]::after { content: ''; position: absolute; width: 20px; height: 20px; top: 2px; left: 2px; border-radius: 50%; background: white; box-shadow: 0 1px 3px #0003; }
+.phone-settings input[role="switch"]:checked { background: var(--accent); border-color: var(--accent); }
+.phone-settings input[role="switch"]:checked::after { transform: translateX(16px); }
+.phone-setting-feedback { min-height: 32px; padding-top: 8px; color: var(--muted); font-size: 12px; }
+.phone-setting-feedback p { margin: 0; line-height: 1.5; }
+.phone-forget { min-height: 40px; border: 0; background: transparent; color: var(--muted); font-size: 13px; }
+@media (min-width: 600px) {
+  .phone-settings .phone-setting-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); column-gap: 24px; }
+  .phone-settings .phone-field { min-height: 52px; }
+}
+@media (forced-colors: active) {
+  .phone-settings .phone-field input[role="switch"] { appearance: auto; }
+  .phone-settings input[role="switch"]::after { display: none; }
+}

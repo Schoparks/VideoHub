@@ -1,5 +1,5 @@
 import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from 'react';
-import type { MediaPart, PlaybackSource, Preferences } from '../shared/types';
+import type { MediaPart, PlaybackSource, Preferences, PlaybackOpenResult } from '../shared/types';
 import type { Action } from '../input/gamepad';
 import { playerAction } from '../input/player-actions';
 import { EpisodePicker } from './EpisodePicker';
@@ -16,8 +16,11 @@ import { usePlayerCompletion } from '../hooks/usePlayerCompletion';
 import { createPlayerExit } from '../hooks/player-exit';
 import './player-updates.css';
 import type { NextPlaybackKind } from '../shared/playback-next';
+import { allowedBilibiliQualities } from '../shared/bilibili-quality';
+import { PlayerVideo } from './PlayerVideo';
+import { playerCompanion, companionTransition, type CompanionPlayerHandle } from '../hooks/player-companion';
 
-export interface PlayerHandle { action(action: Action): boolean }
+export interface PlayerHandle extends CompanionPlayerHandle { action(action: Action): boolean }
 interface PlayerProps {
   source: PlaybackSource;
   preferences: Preferences;
@@ -26,12 +29,12 @@ interface PlayerProps {
   cancelPending: () => void;
   settings: () => void;
   toggleDanmaku: () => void;
-  next: () => void | Promise<void>;
+  next: () => Promise<PlaybackOpenResult>;
   nextKind: NextPlaybackKind | undefined;
   queue: () => void;
-  episode: (part: MediaPart) => void | Promise<void>;
-  quality: (value: number, position: number) => void | Promise<void>;
-  reload: (position: number) => void | Promise<void>;
+  episode: (part: MediaPart) => Promise<'opened' | 'failed' | 'canceled' | 'busy'>;
+  quality: (value: number, position: number, same?: boolean) => Promise<'opened' | 'failed' | 'canceled' | 'busy'>;
+  reload: (position: number) => Promise<PlaybackOpenResult>;
   notify: (message: string) => void;
 }
 
@@ -57,6 +60,8 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player({ so
   const operations = usePlayerTransition(source, { cancelPending, notify }, blocked || episodesOpen || !!choice);
   const { switching, exiting } = operations;
   const parts = source.parts || (source.part ? [source.part] : []);
+  const qualities = source.item.source === 'bilibili' && !source.live
+    ? allowedBilibiliQualities(source.qualities || [], preferences) : source.qualities || [];
   const partIndex = parts.findIndex(part => part.id === source.part?.id);
   const overlay = usePlayerOverlay({ bar: barRef, paused, seeking: seek !== undefined, error: !!error,
     panel: episodesOpen || !!choice, switching: switching || playerWindow.busy || exiting, blocked });
@@ -120,14 +125,14 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player({ so
     await operations.run({ ...media, canResume: () => !completion.completed() }, run, pause, returning);
   };
   const advance = (pause = false) => {
-    if (nextKind && !operations.blocked()) void transition(next, pause);
+    if (nextKind && !operations.blocked()) void transition(async () => { await next(); }, pause);
   };
   const completion = usePlayerCompletion({ sessionId: source.sessionId, autoNext: preferences.autoNext,
     covered: editing, switching, error: !!error, advance: () => advance() });
   const chooseEpisode = (part: MediaPart) => {
     setEpisodesOpen(false);
     reveal();
-    if (part.id !== source.part?.id) void transition(() => episode(part), true);
+    if (part.id !== source.part?.id) void transition(async () => { await episode(part); }, true);
     else if (ended) toggle();
   };
   const closeEpisodes = () => {
@@ -146,7 +151,7 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player({ so
   const previous = () => {
     if (source.live || operations.blocked()) return;
     if (partIndex > 0) {
-      void transition(() => episode(parts[partIndex - 1]), true);
+      void transition(async () => { await episode(parts[partIndex - 1]); }, true);
       return;
     }
     const video = videoRef.current;
@@ -177,7 +182,7 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player({ so
   };
   const closeOptions = () => { setChoice(undefined); reveal(); };
   const openOptions = (kind: 'rate' | 'quality', opener: HTMLElement) => {
-    if (operations.blocked()) return;
+    if (operations.blocked() || kind === 'quality' && !qualities.length) return;
     choiceOpener.current = opener;
     setSeek(undefined);
     reveal();
@@ -187,14 +192,38 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player({ so
     if (operations.blocked()) return;
     closeOptions();
     if (choice === 'rate') setRate(value);
+    else if (choice === 'quality' && !error && value === source.quality) void quality(value, position, true);
     else if (choice === 'quality' && (error || value !== source.quality)) {
       const current = videoRef.current;
       const start = current?.readyState ? current.currentTime : position;
-      void transition(() => quality(value, start), true,
+      void transition(async () => { await quality(value, start); }, true,
         { item: source.item.id, part: source.part?.id, paused: !error && media.isPaused() });
     }
   };
   useImperativeHandle(ref, () => ({
+    ...playerCompanion({
+      state: { session: source.sessionId, title: source.item.title, live: source.live,
+        paused, ended, busy: switching || exiting, loading, error, position, duration, rate: source.live ? 1 : rate,
+        quality: source.quality, qualities, parts: parts.map(({ id, title }) => ({ id, title })),
+        part: source.part?.id, next: !!nextKind, related: source.item.source === 'bilibili' && source.item.kind === 'video' },
+      blocked: () => blocked || episodesOpen || !!choice || seek !== undefined || operations.blocked(),
+      toggle, previous, next: () => companionTransition(run => transition(run, true), next), stop: leave, seek: commitSeek, rate: setRate,
+      retry: () => companionTransition(run => transition(run), () => reload(videoRef.current?.currentTime || position)),
+      transition: run => {
+        const checkpoint = operations.checkpoint();
+        return transition(async () => { if (operations.sameView(checkpoint)) await run(); }, true);
+      },
+      episode: async id => {
+        if (id === source.part?.id) { if (ended) toggle(); return {}; }
+        return companionTransition(run => transition(run, true), () => episode(parts.find(part => part.id === id)!));
+      },
+      quality: async value => {
+        const start = videoRef.current?.readyState ? videoRef.current.currentTime : position;
+        return companionTransition(run => transition(run, true,
+          { item: source.item.id, part: source.part?.id, paused: !error && media.isPaused() }),
+        () => quality(value, start, !error && value === source.quality));
+      },
+    }),
     action: action => playerAction(action, {
       controls, error: !!error, switching, exiting, episodes: episodesOpen, options: !!choice,
       seeking: seek !== undefined, multipart: parts.length > 1,
@@ -228,38 +257,16 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player({ so
       data-multipart={parts.length > 1} aria-label="视频播放器"
       onMouseMove={overlay.pointerMove} onMouseLeave={overlay.pointerLeave}
       onFocusCapture={overlay.focus} onBlurCapture={overlay.blur}>
-      <video key={`video:${source.sessionId}`} ref={videoRef} playsInline onClick={toggle}
-        poster={window.hubPlatform === 'android' ? 'data:image/gif;base64,R0lGODlhAQABAAD/ACwAAAAAAQABAAACADs=' : undefined}
-        onTimeUpdate={event => media.timeUpdate(event.currentTarget.currentTime)}
-        onDurationChange={event => setDuration(Number.isFinite(event.currentTarget.duration) ? event.currentTarget.duration : 0)}
-        onWaiting={() => { if (!media.failed()) setLoading(true); }} onPlaying={() => {
-          if (!media.playing()) return;
-          setLoading(false);
-          setPaused(false);
-          setEnded(false);
-        }}
-        onPause={() => {
-          setPaused(true);
-          void flush(true);
-        }}
-        onEnded={() => {
-          if (operations.isLeaving() || media.failed() || !completion.finish()) return;
-          if (operations.blocked()) completion.cancel();
-          media.setPlaying(false);
-          setEnded(true);
-          setPaused(true);
-          setLoading(false);
-          reveal(!editing);
-          void flush(true);
-        }}
-        onError={() => media.fail()} />
+      <PlayerVideo key={source.sessionId} session={source.sessionId} videoRef={videoRef} media={media}
+        completion={completion} leaving={operations.isLeaving} blocked={operations.blocked} editing={editing}
+        toggle={toggle} reveal={reveal} duration={setDuration} loading={setLoading} paused={setPaused} ended={setEnded} />
       {preferences.danmaku && danmaku.available && <DanmakuLayer key={`danmaku:${source.sessionId}`} comments={danmaku.comments} preferences={preferences} video={videoRef} />}
       <PlayerFeedback loading={loading && !exiting} error={error} busy={switching} exiting={exiting} covered={!!choice} seek={seek}
-        quality={source.qualities?.length ? opener => openOptions('quality', opener) : undefined}
-        retry={() => void transition(() => reload(videoRef.current?.readyState ? videoRef.current.currentTime : position))}
+        quality={qualities.length ? opener => openOptions('quality', opener) : undefined}
+        retry={() => void transition(async () => { await reload(videoRef.current?.readyState ? videoRef.current.currentTime : position); })}
         leave={() => void leave()} />
       <PlayerControls
-        source={source} parts={parts} partIndex={partIndex} paused={paused} position={position}
+        source={source} qualityAvailable={!!qualities.length} parts={parts} partIndex={partIndex} paused={paused} position={position}
         ended={ended} loading={loading} exiting={exiting}
         duration={duration} controls={controls && !error} episodesOpen={episodesOpen} optionsOpen={!!choice} switching={switching}
         seek={seek} rate={rate} fullscreen={fullscreen} fullscreenBusy={playerWindow.busy} sync={sync || danmaku.error}
@@ -280,7 +287,7 @@ export const Player = forwardRef<PlayerHandle, PlayerProps>(function Player({ so
         switching={switching} opener={episodeOpener.current} choose={chooseEpisode} close={closeEpisodes} />}
       {choice && <PlayerOptionPicker title={choice === 'rate' ? '播放速度' : '清晰度'}
         value={choice === 'rate' ? rate : source.quality} opener={choiceOpener.current}
-        options={choice === 'rate' ? [.5, .75, 1, 1.25, 1.5, 2].map(id => ({ id, label: `${id}×` })) : source.qualities || []}
+        options={choice === 'rate' ? [.5, .75, 1, 1.25, 1.5, 2].map(id => ({ id, label: `${id}×` })) : qualities}
         choose={chooseOption} close={closeOptions} />}
     </section>
   );

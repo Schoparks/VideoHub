@@ -146,7 +146,11 @@ final class PhoneController {
 
     private ControllerHttp.Reply dispatch(JSONObject command, String secret) throws Exception {
         String kind = command.optString("kind");
-        if (!(kind.equals("action") || kind.equals("search") || kind.equals("url"))) return ControllerHttp.json(400, "{\"error\":\"failed\"}");
+        if (!(kind.equals("action") || kind.equals("search") || kind.equals("url")
+            || kind.equals("snapshot") || kind.equals("catalog") || kind.equals("cover")
+            || kind.equals("play") || kind.equals("related") || kind.equals("settings")
+            || kind.equals("player") || kind.equals("tv-login") || kind.equals("folders")
+            || kind.equals("queue-edit") || kind.equals("collection-edit"))) return ControllerHttp.json(400, "{\"error\":\"failed\"}");
         String id = UUID.randomUUID().toString();
         CompletableFuture<String> result = new CompletableFuture<>();
         synchronized (this) {

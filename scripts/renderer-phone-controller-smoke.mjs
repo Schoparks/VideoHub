@@ -5,164 +5,208 @@ import { resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
 import { build } from 'esbuild';
 import { launchHeadlessRenderer } from './headless-renderer.mjs';
-import { installReliabilityFixture } from './renderer-reliability-fixture.mjs';
+import { installPhoneCompanion } from './phone-companion-fixture.mjs';
+import { checkPhoneLibrary } from './phone-library-checks.mjs';
+import { checkPhoneNavigation } from './phone-navigation-checks.mjs';
+import { checkPhoneBrowse } from './phone-browse-checks.mjs';
 
 const output = resolve('.tmp/renderer-phone-controller');
 await mkdir(output, { recursive: true });
 await build({ entryPoints: ['electron/remote/server.ts'], bundle: true, platform: 'node', format: 'esm', outfile: `${output}/server.mjs` });
 const { ControllerServer } = await import(pathToFileURL(`${output}/server.mjs`).href);
-const install = new Function(`(${installReliabilityFixture})();
-  window.reliability.failNextBootstrap = false;
-  window.hub.onControllerCommand = callback => { window.receiveController = callback; return () => { window.receiveController = undefined; }; };
-  window.hub.controllerReply = (id, reply) => window.phoneReply(id, reply);
-  window.hub.controllerStatus = () => window.phoneStatus ? window.phoneStatus() : Promise.resolve({ enabled: false, urls: [] });
-  window.hub.controllerEnable = enabled => window.phoneEnable(enabled);
-  window.hub.openUrl = async url => {
-    if (url.includes('failure')) throw new Error('测试解析失败');
-    return { id: 'url:' + url, url, source: 'url', kind: 'video', title: '手机链接' };
-  };
-`);
 const report = [];
 for (const viewport of [{ width: 1440, height: 950 }, { width: 1920, height: 1080 }]) {
-  const { page, errors, close } = await launchHeadlessRenderer(viewport, install);
-  const pending = new Map();
-  const commands = [];
+  const { page, errors, close } = await launchHeadlessRenderer(viewport, installPhoneCompanion);
+  const pending = new Map(), commands = [];
   const server = new ControllerServer(resolve('dist-electron/remote'), command => new Promise((resolveReply, reject) => {
     const id = randomUUID();
     commands.push(command);
     pending.set(id, resolveReply);
     void page.evaluate(request => window.receiveController(request), { id, command }).catch(reject);
   }));
-  let phone;
+  let context, phone;
+  const checks = [];
   try {
     await page.exposeFunction('phoneReply', (id, reply) => { pending.get(id)?.(reply); pending.delete(id); });
-    await page.exposeFunction('phoneStatus', () => server.status());
-    await page.exposeFunction('phoneEnable', async enabled => enabled ? server.start() : server.stop());
+    await page.exposeFunction('phoneStatus', () => server.start());
     await server.start();
     await page.getByRole('button', { name: '播放 可靠性测试', exact: true }).first().waitFor();
-    await page.getByRole('button', { name: '设置', exact: true }).click();
-    await page.getByRole('tab', { name: '手机遥控', exact: true }).click();
-    await page.getByAltText('手机遥控二维码', { exact: true }).waitFor();
-    await page.screenshot({ path: `${output}/${viewport.width}-pairing.png` });
     const url = new URL(server.status().urls[0]);
     url.hostname = '127.0.0.1';
-    phone = await page.context().browser().newPage({ viewport: { width: viewport.width === 1440 ? 390 : 320, height: 844 }, hasTouch: true, isMobile: true });
+    const raw = async command => (await fetch(`${url.origin}/command`, {
+      method: 'POST', headers: { Authorization: `Bearer ${url.hash.slice(1)}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify(command),
+    })).json();
+    context = await page.context().browser().newContext({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
+    phone = await context.newPage();
     const phoneErrors = [];
     phone.on('pageerror', error => phoneErrors.push(error.message));
     await phone.goto(url.href);
-    await phone.getByText('在线', { exact: true }).waitFor();
+    await phone.getByText('已连接电视', { exact: true }).waitFor();
+    await phone.getByRole('button', { name: '播放 可靠性测试', exact: true }).waitFor();
+    await phone.locator('.phone-cover img').first().waitFor();
     assert.equal(new URL(phone.url()).hash, '');
-    await phone.getByRole('button', { name: '返回', exact: true }).tap();
-    await page.getByRole('dialog').waitFor({ state: 'detached' });
-    await phone.getByRole('button', { name: '搜索', exact: true }).tap();
-    const searchInput = phone.getByRole('searchbox', { name: '搜索关键词', exact: true });
-    assert.equal(await searchInput.getAttribute('autocomplete'), 'off');
-    assert.equal(await searchInput.getAttribute('inputmode'), 'search');
-    assert.equal(await searchInput.getAttribute('name'), 'search-query');
-    await searchInput.fill('手机中文搜索');
-    await searchInput.dispatchEvent('compositionstart');
-    await searchInput.press('Enter');
+    await phone.screenshot({ path: `${output}/${viewport.width}-browse.png` });
+    await phone.close();
+    phone = await context.newPage();
+    phone.on('pageerror', error => phoneErrors.push(error.message));
+    await phone.goto(url.origin);
+    await phone.getByText('已连接电视', { exact: true }).waitFor();
+    checks.push('fresh tab with fragment-free address reconnects from remembered pairing');
+    await checkPhoneBrowse(phone, page);
+    checks.push('all six desktop sections; dynamics/reposts, regions, cinema/follows and all five personal filters');
+    // Rapid fixture navigation intentionally exhausts part of the HTTP burst budget.
+    // Let it refill before testing writes; never retry or replay a failed write.
+    await phone.waitForTimeout(2000);
+
+    await phone.getByRole('button', { name: '打开搜索', exact: true }).click();
+    const search = phone.getByRole('searchbox', { name: '搜索关键词', exact: true });
+    await search.fill('手机中文搜索');
+    await search.dispatchEvent('compositionstart');
+    await search.press('Enter');
     assert.equal(await page.evaluate(() => window.reliability.browse.some(request => request.keyword === '手机中文搜索')), false);
-    await searchInput.dispatchEvent('compositionend');
+    await search.dispatchEvent('compositionend');
     await phone.waitForTimeout(40);
-    await phone.screenshot({ path: `${output}/${viewport.width}-search-card.png` });
-    await phone.getByRole('button', { name: '在屏幕上搜索', exact: true }).tap();
-    await page.waitForFunction(() => window.reliability.browse.some(request => request.keyword === '手机中文搜索'));
-    await phone.getByText('已提交搜索', { exact: true }).waitFor();
-    await phone.getByRole('button', { name: '链接', exact: true }).tap();
-    await phone.getByRole('textbox', { name: '视频地址或 BV 号', exact: true }).fill('file:///private.mp4');
-    await phone.getByRole('button', { name: '打开视频', exact: true }).tap();
-    await phone.getByText('请输入 HTTP(S) 地址或 BV 号', { exact: true }).waitFor();
-    await phone.getByRole('textbox', { name: '视频地址或 BV 号', exact: true }).fill('https://example.com/failure');
-    await phone.getByRole('button', { name: '打开视频', exact: true }).tap();
-    await phone.getByText('操作失败，请在屏幕上查看详情或重试', { exact: true }).first().waitFor();
-    await page.evaluate(() => { window.reliability.holdResolve = true; });
-    await phone.getByRole('textbox', { name: '视频地址或 BV 号', exact: true }).fill('https://example.com/cancel.mp4');
-    await phone.getByRole('button', { name: '打开视频', exact: true }).tap();
-    await page.waitForFunction(() => typeof window.reliability.finishResolve === 'function');
-    const competing = await fetch(`${url.origin}/command`, {
-      method: 'POST', headers: { Authorization: `Bearer ${url.hash.slice(1)}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ kind: 'search', text: '不可抢占' }),
-    });
-    assert.deepEqual(await competing.json(), { error: 'busy' });
-    await phone.getByRole('button', { name: '关闭卡片', exact: true }).tap();
-    await phone.getByRole('button', { name: '返回', exact: true }).tap();
-    await page.evaluate(() => { window.reliability.holdResolve = false; window.reliability.finishResolve(); });
-    await page.waitForFunction(() => window.reliability.releases.length === 1);
+    await phone.getByRole('button', { name: '搜索', exact: true }).click();
+    await phone.getByRole('button', { name: '播放 手机搜索结果：手机中文搜索', exact: true }).waitFor();
+    await page.getByRole('heading', { name: '首页', exact: true }).waitFor();
     assert.equal(await page.locator('video').count(), 0);
-    await phone.getByRole('button', { name: '链接', exact: true }).tap();
-    await phone.getByRole('textbox', { name: '视频地址或 BV 号', exact: true }).fill('https://example.com/video.mp4');
-    await phone.getByRole('button', { name: '打开视频', exact: true }).tap();
+    await phone.screenshot({ path: `${output}/${viewport.width}-search.png` });
+    checks.push('IME guard; phone results show title and cover without changing television route');
+
+    await phone.getByRole('button', { name: '工具', exact: true }).click();
+    await phone.getByRole('button', { name: '设置', exact: true }).click();
+    await phone.getByRole('switch', { name: '自动连播', exact: true }).click();
+    await page.waitForFunction(() => window.reliability.boot.preferences.autoNext);
+    await phone.getByLabel('B 站画质上限', { exact: true }).selectOption('80');
+    await page.waitForFunction(() => window.reliability.boot.preferences.bilibiliMaxQuality === 80);
+    await page.evaluate(() => { window.reliability.failPreference = true; });
+    await phone.getByRole('button', { name: '弹幕', exact: true }).click();
+    await phone.getByRole('switch', { name: '显示弹幕', exact: true }).click();
+    await phone.getByText('操作失败，请重试', { exact: true }).waitFor();
+    await phone.waitForFunction(() => !document.querySelector('input[role="switch"]:checked')?.disabled);
+    assert.equal(await phone.getByRole('switch', { name: '显示弹幕', exact: true }).isChecked(), false);
+    await page.evaluate(() => { window.reliability.failPreference = false; });
+    await phone.screenshot({ path: `${output}/${viewport.width}-settings.png` });
+    checks.push('direct preferences, persisted quality limit and visible save failure with rollback');
+
+    await phone.getByRole('button', { name: '关闭卡片', exact: true }).click();
+    await phone.getByRole('button', { name: '播放 手机搜索结果：手机中文搜索', exact: true }).click();
     await page.locator('video').waitFor();
-    await phone.getByText('视频已打开', { exact: true }).waitFor();
-    await page.waitForFunction(() => document.querySelector('video')?.paused === false);
-    await phone.getByRole('button', { name: '播放 / 暂停', exact: true }).tap();
-    await page.waitForFunction(() => document.querySelector('video')?.paused === true);
-    await phone.getByRole('button', { name: '自定义快捷键', exact: true }).tap();
-    await phone.getByLabel('快捷键 1', { exact: true }).selectOption('menu');
-    await phone.getByRole('button', { name: '关闭卡片', exact: true }).tap();
-    await phone.reload();
-    await phone.getByRole('button', { name: '菜单', exact: true }).nth(1).waitFor();
-    for (const size of [{ width: 390, height: 640 }, { width: 320, height: 568 }, { width: 844, height: 390 }]) {
-      await phone.setViewportSize(size);
-      assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth || document.documentElement.scrollHeight > innerHeight), false);
-      assert.equal(await phone.locator('main').evaluate(node => node.scrollHeight > node.clientHeight), false);
-      const tools = await phone.locator('.phone-tools').boundingBox();
-      assert.ok(tools.y >= 0 && tools.y + tools.height <= size.height);
+    await phone.getByRole('button', { name: '暂停', exact: true }).waitFor();
+    await phone.getByRole('button', { name: '播放 相关视频测试', exact: true }).waitFor();
+    await phone.getByRole('button', { name: '暂停', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('video').paused);
+    await phone.getByRole('button', { name: '播放速度', exact: true }).click();
+    await phone.getByRole('button', { name: '1.5×', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('video').playbackRate === 1.5);
+    const timeline = phone.getByRole('slider', { name: '播放进度', exact: true });
+    await timeline.fill('42');
+    assert.notEqual(await page.locator('video').evaluate(video => video.currentTime), 42);
+    await phone.getByRole('button', { name: '跳转到此处', exact: true }).click();
+    await page.waitForFunction(() => document.querySelector('video').currentTime === 42);
+    const oldSession = (await raw({ kind: 'snapshot' })).state.player.session;
+    await phone.getByRole('button', { name: '清晰度', exact: true }).click();
+    await phone.getByRole('button', { name: '720P', exact: true }).click();
+    await page.waitForFunction(() => window.reliability.resolves.at(-1).quality === 64);
+    await page.waitForFunction(() => document.querySelector('video').paused && document.querySelector('video').currentTime === 42);
+    assert.deepEqual(await raw({ kind: 'player', session: oldSession, command: { operation: 'toggle' } }), { error: 'canceled' });
+    await phone.screenshot({ path: `${output}/${viewport.width}-player.png` });
+    checks.push('phone-only play/pause, rate, confirmed seek, paused quality switch and stale session rejection');
+
+    await page.evaluate(() => { window.reliability.failResolve = true; });
+    await phone.getByRole('button', { name: '清晰度', exact: true }).click();
+    await phone.getByRole('button', { name: '1080P', exact: true }).click();
+    await phone.getByRole('dialog').getByText('操作失败，请重试', { exact: true }).waitFor();
+    await phone.getByRole('button', { name: '关闭卡片', exact: true }).click();
+    await page.evaluate(() => { window.reliability.failResolve = false; });
+    await phone.getByRole('button', { name: '播放 相关视频测试', exact: true }).click();
+    await phone.getByRole('heading', { name: '相关视频测试', exact: true }).waitFor();
+    assert.equal(await page.locator('video').count(), 1);
+    checks.push('actual resolution failure reaches phone; related item replaces television playback');
+    await checkPhoneLibrary(phone, page, raw);
+    await checkPhoneNavigation(phone, page, raw);
+    checks.push('platform and fresh local history; episode change keeps minimized view; scroll restored; late play preserves a newer sheet');
+    checks.push('TV-only QR, folder actions, queue reordering/removal/failure, home bubble and scroll-to-top');
+
+    let local;
+    // A successful mutation starts a list refresh; wait for that read lock, never replay a write.
+    for (let attempt = 0; attempt < 20; attempt++) {
+      local = await raw({ kind: 'catalog', collection: 'local' });
+      if (local.error !== 'busy') break;
+      await phone.waitForTimeout(50);
     }
-    await phone.setViewportSize({ width: 390, height: 640 });
-    assert.ok(await phone.locator('.shortcuts svg').count() >= 6);
-    const pause = phone.getByRole('button', { name: '菜单', exact: true }).nth(1);
-    const pauseBounds = await pause.boundingBox();
-    let canceledAt = commands.length;
-    await phone.mouse.move(pauseBounds.x + 10, pauseBounds.y + 10);
-    await phone.mouse.down();
-    await phone.mouse.move(pauseBounds.x + 10, pauseBounds.y + 30);
-    await phone.mouse.up();
-    await pause.dispatchEvent('click', { detail: 0 });
-    assert.equal(commands.length, canceledAt);
-    const touchpad = phone.getByRole('button', { name: '滑动移动，轻点确认', exact: true });
-    await touchpad.scrollIntoViewIfNeeded();
-    const touchBounds = await touchpad.boundingBox();
-    let start = commands.length;
-    await phone.mouse.move(touchBounds.x + 30, touchBounds.y + 30);
-    await phone.mouse.down();
-    await phone.mouse.move(touchBounds.x + 100, touchBounds.y + 30, { steps: 2 });
-    await phone.mouse.up();
-    assert.ok(commands.slice(start).some(command => command.action === 'right'));
-    assert.ok(commands.slice(start).every(command => command.action !== 'confirm'));
-    const swipedAt = commands.length;
-    await touchpad.dispatchEvent('click', { detail: 0 });
-    assert.equal(commands.length, swipedAt);
-    start = commands.length;
-    await phone.mouse.down();
-    await phone.evaluate(() => window.dispatchEvent(new Event('blur')));
-    await phone.mouse.up();
-    assert.equal(commands.length, start);
-    // Pointer hold is canceled on pointercancel and does not replay after release.
+    assert.ok(local.catalog, JSON.stringify(local));
+    assert.equal(local.catalog.items[0].title, '本地样片');
+    assert.equal(JSON.stringify(local).includes('/private/'), false);
+    await phone.getByRole('button', { name: '工具', exact: true }).click();
+    await phone.getByRole('button', { name: '设置', exact: true }).click();
+    for (const size of [{ width: 320, height: 568 }, { width: 390, height: 844 }, { width: 844, height: 390 }]) {
+      await phone.setViewportSize(size);
+      assert.equal(await phone.evaluate(() => document.documentElement.scrollWidth > innerWidth), false);
+      const header = await phone.locator('.companion-header').boundingBox();
+      assert.equal(header.y, 0);
+      assert.ok(header.height <= 60);
+      assert.equal(await phone.locator('.companion-tabs').count(), 0);
+      for (const name of ['观看', '弹幕', '界面']) {
+        await phone.getByRole('button', { name, exact: true }).click();
+        const dimensions = await phone.getByRole('dialog').evaluate(dialog => ({
+          overflow: dialog.scrollHeight - dialog.clientHeight,
+          outside: dialog.getBoundingClientRect().bottom > innerHeight,
+          center: Math.abs(dialog.getBoundingClientRect().top + dialog.getBoundingClientRect().height / 2 - innerHeight / 2),
+        }));
+        assert.ok(dimensions.overflow <= 1, JSON.stringify({ size, name, dimensions }));
+        assert.equal(dimensions.outside, false);
+        assert.ok(dimensions.center <= 1, JSON.stringify(dimensions));
+      }
+      await phone.getByRole('button', { name: '观看', exact: true }).click();
+      await phone.screenshot({ path: `${output}/${viewport.width}-layout-${size.width}.png` });
+    }
+    await phone.getByRole('button', { name: '关闭卡片', exact: true }).click();
+    await phone.getByRole('button', { name: '工具', exact: true }).click();
+    await phone.getByRole('button', { name: '按键', exact: true }).click();
+    await phone.getByRole('button', { name: '自定义快捷键', exact: true }).click();
+    await phone.getByLabel('快捷键 1', { exact: true }).selectOption('menu');
+    await phone.getByRole('dialog').last().getByRole('button', { name: '关闭卡片', exact: true }).click();
+    const countActions = () => commands.filter(command => command.kind === 'action').length;
     const down = phone.getByRole('button', { name: '下', exact: true });
-    const before = commands.length;
-    await down.scrollIntoViewIfNeeded();
-    const bounds = await down.boundingBox();
-    await phone.mouse.move(bounds.x + bounds.width / 2, bounds.y + bounds.height / 2);
+    await down.evaluate(button => button.scrollIntoView({ block: 'center' }));
+    assert.equal(await down.evaluate(button => {
+      const rect = button.getBoundingClientRect();
+      return button.contains(document.elementFromPoint(rect.x + rect.width / 2, rect.y + rect.height / 2));
+    }), true);
+    const box = await down.boundingBox();
+    const before = countActions();
+    await phone.mouse.move(box.x + box.width / 2, box.y + box.height / 2);
     await phone.mouse.down();
     await phone.waitForTimeout(600);
     await down.dispatchEvent('pointercancel', { pointerId: 1 });
     await phone.mouse.up();
-    const stopped = commands.length;
+    const stopped = countActions();
     await phone.waitForTimeout(350);
-    assert.equal(commands.length, stopped);
-    assert.ok(stopped >= before + 1);
-    await phone.screenshot({ path: `${output}/${viewport.width}-phone.png`, fullPage: true });
+    assert.equal(countActions(), stopped);
+    assert.ok(stopped > before);
+    await phone.getByRole('button', { name: '关闭卡片', exact: true }).click();
+    await phone.getByRole('button', { name: '工具', exact: true }).click();
+    await phone.getByRole('button', { name: '设置', exact: true }).click();
+    await phone.getByRole('button', { name: '界面', exact: true }).click();
+    await phone.getByRole('button', { name: '忘记此连接', exact: true }).click();
+    await phone.getByText('请扫描应用中的遥控二维码', { exact: true }).waitFor();
+    await phone.goto(url.href);
+    await phone.getByText('已连接电视', { exact: true }).waitFor();
+    checks.push('forget pairing and scan again in the same document without reload');
     await server.stop();
-    await phone.getByRole('button', { name: '返回', exact: true }).tap();
-    await phone.getByText('连接中断或超时，请检查同一局域网后重试', { exact: true }).waitFor();
+    await phone.getByText('未连接', { exact: true }).waitFor();
     assert.deepEqual(errors, []);
     assert.deepEqual(phoneErrors, []);
-    report.push({ viewport, passed: true, checks: ['QR and LAN HTTP', 'semantic back/pause', 'Chinese search', 'invalid URL and actual failure', 'busy/cancel and late source release', 'URL opens existing player', 'custom mappings persist', 'swipe and blur cancellation', 'hold cancellation', 'disconnect and no replay', 'mobile width'] });
+    checks.push('opaque local media handles; portrait/landscape bounds; hold cancellation; disconnection');
+    report.push({ viewport, passed: true, checks });
+  } catch (error) {
+    await phone?.screenshot({ path: `${output}/failure.png` }).catch(() => {});
+    throw error;
   } finally {
     await server.stop();
-    await phone?.close();
+    await context?.close();
     await close();
   }
 }

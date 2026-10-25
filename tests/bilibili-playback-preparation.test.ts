@@ -5,6 +5,7 @@ import { BilibiliProvider, normalizeDynamic, normalizeVideo } from '../electron/
 import { PlaybackSessions } from '../electron/playback/session';
 import type { Store } from '../electron/storage/store';
 import type { MediaGateway } from '../electron/playback/gateway';
+import { defaultPreferences } from '../src/shared/types';
 
 const item = { id: 'bili:42', source: 'bilibili' as const, kind: 'video' as const, title: '旧标题', aid: 42 };
 const response = (data: unknown, code = 0) => new Response(JSON.stringify({ code, data }));
@@ -21,7 +22,7 @@ function fixture() {
   };
   const vault = new Vault('', { available: () => false, encrypt: Buffer.from, decrypt: x => x.toString() });
   const provider = new BilibiliProvider(new BilibiliAccount(vault, fetcher));
-  const store = { state: { history: [] } } as unknown as Store;
+  const store = { state: { history: [], preferences: { ...defaultPreferences } } } as unknown as Store;
   const gateway = { register: () => 'http://localhost/media', release: () => {} } as unknown as MediaGateway;
   return { pending, calls, provider, sessions: new PlaybackSessions(store, provider, gateway) };
 }

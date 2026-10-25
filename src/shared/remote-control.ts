@@ -1,4 +1,8 @@
-/** Finite phone controller contract. Never carries desktop credentials or media state. */
+import type { CompanionCommand } from './companion';
+import type { companionReply } from './companion-schema';
+import { parseCompanionCommand } from './companion-command';
+import type { z } from 'zod';
+/** Finite phone contract: presentation data only, never credentials or media addresses. */
 export const controllerActions = [
   'up', 'down', 'left', 'right', 'confirm', 'back', 'menu', 'details',
   'search', 'previous', 'next', 'rewind', 'forward', 'pause',
@@ -7,9 +11,10 @@ export type ControllerAction = typeof controllerActions[number];
 export type ControllerCommand =
   | { kind: 'action'; action: ControllerAction }
   | { kind: 'search'; text: string }
-  | { kind: 'url'; text: string };
-export type ControllerError = 'busy' | 'blocked' | 'failed' | 'unavailable' | 'canceled';
-export interface ControllerReply { error?: ControllerError }
+  | { kind: 'url'; text: string }
+  | CompanionCommand;
+export type ControllerError = 'busy' | 'blocked' | 'failed' | 'unavailable' | 'canceled' | 'app-auth' | 'web-auth';
+export type ControllerReply = z.infer<typeof companionReply>;
 export interface ControllerRequest { id: string; command: ControllerCommand }
 export interface ControllerStatus { enabled: boolean; urls: string[] }
 
@@ -26,6 +31,8 @@ export function isControllerAction(value: unknown): value is ControllerAction {
 export function parseControllerCommand(value: unknown): ControllerCommand | undefined {
   if (!value || typeof value !== 'object') return;
   const input = value as Record<string, unknown>;
+  const companion = parseCompanionCommand(input);
+  if (companion) return companion;
   if (input.kind === 'action' && isControllerAction(input.action)) return { kind: 'action', action: input.action };
   if (typeof input.text !== 'string' || !input.text.trim()) return;
   const text = input.text.trim();

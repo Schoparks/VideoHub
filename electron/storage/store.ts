@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { join } from 'node:path';
 import { defaultPreferences, type HistoryEntry, type MediaItem, type Preferences } from '../../src/shared/types';
 import { restorePgcHistory, restorePgcItem } from './pgc-references';
+import { restoreBilibiliQuality } from '../../src/shared/bilibili-quality';
 export interface State { version: 1; library: MediaItem[]; roots: string[]; history: HistoryEntry[]; queue: MediaItem[]; preferences: Preferences }
 export class Store {
   state: State = { version: 1, library: [], roots: [], history: [], queue: [], preferences: { ...defaultPreferences } };
@@ -14,6 +15,7 @@ export class Store {
       const data = JSON.parse(await readFile(join(this.directory, 'library.json'), 'utf8'));
       if (data.version !== 1 || !Array.isArray(data.library) || !Array.isArray(data.history)) throw new Error('格式不正确');
       const restored: State = { ...this.state, ...data, preferences: { ...defaultPreferences, ...data.preferences } };
+      Object.assign(restored.preferences, restoreBilibiliQuality(data.preferences));
       if (!Array.isArray(restored.queue) || !Array.isArray(restored.roots)) throw new Error('格式不正确');
       restored.history = restored.history.map(restorePgcHistory);
       restored.queue = restored.queue.map(restorePgcItem);

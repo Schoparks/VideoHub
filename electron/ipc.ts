@@ -1,4 +1,6 @@
 import { z } from 'zod';
+import { companionReply } from '../src/shared/companion-schema';
+import { bilibiliQualityLimits } from '../src/shared/bilibili-quality';
 export const itemSchema = z.object({
   id: z.string().max(500), source: z.enum(['bilibili','local','url']), kind: z.enum(['video','live','season']), title: z.string().max(2000),
   cover: z.string().max(4000).optional(), author: z.string().max(500).optional(), duration: z.number().nonnegative().optional(), description: z.string().max(20000).optional(), badge: z.string().max(500).optional(),
@@ -8,7 +10,8 @@ export const partSchema = z.object({ id: z.string().max(100), title: z.string().
 export const schemas = {
   controllerStatus: z.tuple([]),
   controllerEnable: z.tuple([z.boolean()]),
-  controllerReply: z.tuple([z.string().uuid(), z.object({ error: z.enum(['busy', 'blocked', 'failed', 'unavailable', 'canceled']).optional() })]),
+  controllerReply: z.tuple([z.string().uuid(), companionReply]),
+  related: z.tuple([itemSchema]),
   bootstrap: z.tuple([]),
   cancelUrlResolution: z.tuple([]),
   browse: z.tuple([z.object({
@@ -31,6 +34,9 @@ export const schemas = {
     tvMode: z.boolean(), volume: z.number().min(0).max(1),
     cardColumns: z.union([z.literal(0), z.literal(2), z.literal(3), z.literal(4), z.literal(5), z.literal(6)]).default(0),
     playbackRate: z.number().min(.5).max(2).default(1),
+    bilibiliMaxQuality: z.union(bilibiliQualityLimits.map(limit => z.literal(limit.id))).default(0),
+    bilibiliQualityMode: z.enum(['highest', 'remember']).default('highest'),
+    bilibiliRememberedQuality: z.number().int().min(0).max(127).default(0),
     syncHistory: z.boolean(), autoNext: z.boolean(),
     danmaku: z.boolean().default(false), danmakuOpacity: z.number().min(.2).max(1).default(.8),
     danmakuFontSize: z.number().int().min(18).max(40).default(25),

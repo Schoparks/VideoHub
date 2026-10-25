@@ -1,5 +1,13 @@
 # 分层架构
 
+## B 站点播清晰度策略
+
+`shared/bilibili-quality` 定义分辨率上限、自动/记忆策略及旧配置迁移；1080P80、高码率112、60帧116保留独立身份，但按同分辨率分组。`BilibiliQualitySettings` 只呈现「观看」页控件，经现有Preferences/IPC及桌面、安卓原子存储保存，不直接请求来源。
+
+共用 `PlaybackSessions.resolve` 从已保存偏好计算初始请求，并在DASH构建前过滤超上限候选，返回菜单仅来自实际可播放轨道；MP4响应超限或无法确认画质时拒绝。缺少记忆档时取不高于目标的最高分辨率，同分辨率保留服务端顺序，若全在其上则取上限内最低分辨率，候选为空报错；账号权限、DRM和编码检查保持。直播、本地与直链不应用该策略。
+
+`usePlayback` 在新打开、手动切集和自动续集时不携带上一集回退后的清晰度，明确切画质和失败重试仍携带目标并受上限约束。`chooseQuality` 只在请求成功、未取消时，通过现有偏好写入通道记录具体手动选择；即使服务端临时回退也记录用户所选档位，自动回退不改写记忆，确认当前画质不重载。`usePreferences.settled` 在B站点播解析前等待已排队写入，播放随后再次核对取消代次，不阻塞本地、直链或直播；保存失败沿原通道反馈/回滚。设置改变不主动中断当前视频，菜单即时排除超限项，后续解析应用新策略。
+
 ## 跨内核玻璃与按钮
 
 玻璃效果按CSS实际能力分级，视觉注册和按钮光照不读取业务状态或媒体帧。旧WebView仅对弹窗后的已停用浏览外壳使用普通模糊，播放页面始终不滤镜化视频；两端按钮共用薄填色/边缘及有界确认反馈，菜单组内不叠加独立背景滤镜。播放器提示底色贴合文字，原两行容量和命中坐标保持。模块职责、苹果官方设计依据及验收边界见 [玻璃材质与按钮](glass-materials.md)。
@@ -60,13 +68,13 @@ Android 的 `HttpFailure` 将原生网络异常转换为有限 DNS、TLS、超�
 
 ## 前端结构
 
-手机遥控主页以固定动态视口网格容纳方向区、滑动区和六个图标快捷键，`PhoneSheet` 用原生dialog隔离背景，搜索/链接/快捷键设置按需打开，监听可见视口以避让手机键盘。`SendForm` 使用search类型、明确的search-query/media-url字段及关闭自动完成，移除phone命名；系统联系人建议仍由手机浏览器决定。`ControlButton` 松手提交普通点击、静止长按才连发，`usePointerClickGuard` 阻止取消手势的兼容click补发，保留键盘/辅助点击。
+手机遥控顶栏复用navigation六个栏目，二级分类来自共用browse-sections；横向滚动保留固定搜索/历史/工具按钮，无底栏。PhoneSearch在居中卡片编辑，PhoneBrowse独立请求筛选和分页，companion-dynamics仅传完整动态显示字段及独立配图句柄。usePhoneView管理开始播放自动进入、首页气泡、两页滚动恢复与导航代次；切集不打断已最小化页面，迟到播放不覆盖新卡片。PhoneSheet原生dialog按visualViewport居中及限制高度，返回回工具、关闭恢复原入口。PhoneHistory区分已有网页授权的B站历史和重新读取的本机记录，后者不提交App初始化状态，句柄保留具体分集。目录/收藏夹/相关推荐读取在手机端串行，不排队或重放写入。PhoneSettings按观看/弹幕/界面挂载当前组并发送偏好补丁。RemoteButtons保留方向/滑动及六个快捷键，ControlButton松手提交、静止长按连发，取消手势不补发兼容click。
 
 `input/setting-editing` 只管理设置select/range的编辑意图：确认进入编辑后左右才调用原adjustSelect/adjustRange，上下/返回/完成结束编辑；原即时偏好回写与失败回滚不变。滚轮转交所在模态滚动，滑条首次短点只进入编辑，首次滑动不写入。该门控不作用于播放器时间线和参数菜单。顶栏移除独立键盘按钮，单一搜索框确认进入屏幕键盘，原生空搜索回车也可打开，非空回车仍提交搜索。
 
-手机遥控由独立的 `src/phone/` 页面、`shared/remote-control` 有限数据契约和 `usePhoneController` 接线组成。`useInput` 消费方向/确认及快捷语义，搜索复用 App.search，链接复用 usePlayback.openPlayback 的 opened/busy/canceled/failed 结果，保留原播放取消与迟到来源释放。覆盖层或播放活动时不接受远端文本替换，不建立另一份推荐或播放调度。
+usePhoneController接收命名原生桥指令，按键交给useInput，显示数据与直接操作交给useCompanion。companion-catalog注册有界、账号隔离的不透明句柄，只返回标题/作者/时长/来源与封面能力，不返回路径、URL或平台身份。封面经既有受限图片通道读取，限制体积后作为data图片返回。player-companion通过现有media/transition控制播放，检查会话、覆盖层与操作代次，保持暂停、位置及取消释放；切片/画质/重试返回实际解析结果。PlayerVideo只装配原媒体事件，仍按session重建。偏好经usePreferences串行保存并返回成功布尔值。浏览与搜索沿用原Provider，不改变电视路由；related单独读取普通视频下的相关推荐，不进入首页推荐会话或自动连播队列。前端轻量校验与仅后端使用的Zod模式分离，避免旧WebView前端新增BigInt依赖。
 
-桌面 `electron/remote/` 及安卓原生 `PhoneController`/`ControllerHttp` 随应用自动监听内网 IPv4 随机端口，定时重试及刷新网络地址，手机资源独立打包。二维码片段含随机256位临时密钥，页面读取后移出地址栏，当前标签页临时保留，命令通过 Authorization 请求头提交。服务只允许固定静态路径、状态和命令，校验内网对端、精确 Host/Origin、JSON及有限类型，并限制大小、时限、速率与并发；不访问账号/文件/媒体网关，不开放通用 IPC。桌面通过命名 preload 事件与 controllerReply 校验结果，安卓通过本地原生事件及已校验后端命名桥返回有限错误。暂停取消等待操作但保留监听，后台立即拒绝命令，返回沿用连接，退出/销毁才关闭；操作不在断线后排队重放。兼容原命名controllerEnable桥，但false不再关闭。`PhoneControllerSetting`/`useControllerPairing` 仅呈现及管理连接状态和二维码，网页预览不支持原生遥控服务。
+桌面electron/remote及安卓原生PhoneController/ControllerHttp随应用自动监听内网IPv4随机端口。二维码片段含随机256位会话密钥，页面读取后移出地址栏并按浏览器同源本地保存，支持新标签页重访；401和主动忘记清除，应用重启更换密钥。命令仅通过Authorization请求头提交。服务仍只允许静态路径、状态和有限命令，校验内网对端、Host/Origin、参数及大小/时限/并发；结果按白名单模式过滤，不开放通用IPC、任意文件或媒体代理。暂停取消等待操作但保留监听，后台拒绝指令，退出关闭服务；断线不重放操作。网页预览不伪造原生服务或账号能力。
 
 设置由 `Settings` 按观看、弹幕、手机遥控、手柄分类挂载当前面板，观看控件集中于 `ViewingSettings`。分类使用手动确认的tab语义，`settings-navigation` 只决定分类左右及首控件上下落焦；`setting-editing` 保持先确认后编辑，保存仍通过原偏好串行模块。两端相同字号/视口下使用同一DOM、CSS与控件尺寸，旧WebView仅做能力回退，不另建电视设置页。
 
@@ -253,3 +261,5 @@ B 站公共图片统一 HTTPS，桌面经 `yingji://app/image` 加载。图片�
 跨平台代码使用 Node path、Electron userData、OS safeStorage 和 Chromium Gamepad，不写死磁盘盘符、不调用 shell、不依赖 XInput 专用原生库。打包需分别在目标 OS 验证；此架构不等于 OpenWrt/N1 客户端。
 
 
+
+手机收藏/队列由companion-library解析会话句柄后调用既有写入通道，collectionChanged只失效发起账号的相应缓存。tv-login只打开电视既有扫码界面，不向手机返回扫码图像/ID/平台凭证。RemoteApp仅固定顶栏，播放状态自动进入控制页，返回首页收成气泡，其余操作以PhoneSheet打开。清晰度依据见 [调研说明](bilibili-quality.md)。

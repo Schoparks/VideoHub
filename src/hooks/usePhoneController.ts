@@ -1,12 +1,14 @@
 import { useEffect, useRef } from 'react';
 import { api } from '../api';
 import { parseControllerCommand, type ControllerReply, type ControllerRequest } from '../shared/remote-control';
+import type { CompanionCommand } from '../shared/companion';
 
 interface Options {
   blocked: boolean;
   opening: boolean;
   search: (text: string) => void;
   open: (text: string) => Promise<ControllerReply>;
+  companion: (command: CompanionCommand | { kind: 'url'; text: string }) => Promise<ControllerReply>;
 }
 
 /** Receive named commands through the native bridge; all navigation stays in useInput. */
@@ -25,14 +27,14 @@ export function usePhoneController(options: Options) {
         else if (command.kind === 'action') {
           const event = new CustomEvent('hub-controller-action', { detail: command.action, cancelable: true });
           if (window.dispatchEvent(event)) reply = { error: 'unavailable' };
-        } else if (textPending || current.current.opening) reply = { error: 'busy' };
+        } else if (command.kind !== 'search') reply = await current.current.companion(command);
+        else if (textPending || current.current.opening) reply = { error: 'busy' };
         else if (current.current.blocked) reply = { error: 'blocked' };
         else {
           textPending = true;
           ownsText = true;
           document.dispatchEvent(new CustomEvent('hub-input-action', { detail: 'search' }));
-          if (command.kind === 'search') current.current.search(command.text);
-          else reply = await current.current.open(command.text);
+          current.current.search(command.text);
         }
       } catch { reply = { error: 'failed' }; }
       finally { if (ownsText) textPending = false; }

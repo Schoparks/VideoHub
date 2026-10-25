@@ -11,6 +11,7 @@ import type { CollectionChange } from '../shared/collection-change';
 
 interface Props {
   dialog: NonNullable<Dialog>;
+  phoneLogin?: { type: 'app' | 'web'; revision: number };
   boot: Bootstrap;
   selected?: MediaItem;
   opening: boolean;
@@ -42,7 +43,7 @@ export function AppDialogs(props: Props) {
   const { dialog, boot } = props;
   return (
     <Modal title={titles[dialog]} close={props.close} wide={dialog === 'details' || dialog === 'settings'}>
-      {dialog === 'account' && <Account account={boot.account} update={props.accountChanged} notify={props.notify} />}
+      {dialog === 'account' && <Account account={boot.account} update={props.accountChanged} notify={props.notify} initial={props.phoneLogin} />}
       {dialog === 'details' && props.selected && (
         <Details item={props.selected} play={props.play} enqueue={props.enqueue} notify={props.notify} isWatchLater={props.isWatchLater}
           opening={props.opening} queued={boot.queue.some(item => item.id === props.selected?.id)} queueBusy={props.queueBusy}

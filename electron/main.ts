@@ -12,6 +12,7 @@ import { resolveWebMedia, cancelWebMediaResolution } from './providers/web-media
 import { MediaGateway } from './playback/gateway';
 import { PlaybackSessions } from './playback/session';
 import { schemas } from './ipc';
+import { relatedBilibili } from './providers/bilibili-related';
 import { createFullscreenControl } from './window-fullscreen';
 import type { HubApi } from '../src/shared/types';
 import { fetchCover } from './images';
@@ -59,6 +60,7 @@ async function main() {
     controllerStatus: controller.status, controllerEnable: controller.setEnabled, controllerReply: controller.reply,
     bootstrap: async () => ({ account: account.status(), library: store.state.library, history: store.state.history, queue: store.state.queue, preferences: store.state.preferences, platform: process.platform, version: app.getVersion(), notice: store.notice }),
     browse: request => bili.browse(request), folders: () => bili.folders(),
+    related: item => relatedBilibili(account, item),
     detail: async item => item.source === 'bilibili' ? bili.detail(item) : { item, parts: [], description: item.source === 'local' ? item.path || '' : item.url || '' },
     login: type => account.start(type), pollLogin: id => account.poll(id), cancelLogin: async id => { account.cancel(id); },
     logout: async () => { const status = await account.logout(); bili.reset(); return status; },

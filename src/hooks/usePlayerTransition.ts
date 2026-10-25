@@ -76,6 +76,8 @@ export function usePlayerTransition(source: PlaybackSource, callbacks: Callbacks
     isLeaving: () => leaving.current,
     leave: () => { leaving.current = true; setExiting(true); cancel(); },
     checkpoint: () => ({ generation: generation.current, sessionId: active.current.sessionId, view: view.current }),
+    sameView: (token: { sessionId: string; view: number }) => !leaving.current
+      && token.sessionId === active.current.sessionId && token.view === view.current && !overlay.current,
     valid: (token: { generation: number; sessionId: string; view: number }) => current(token.generation)
       && token.sessionId === active.current.sessionId && token.view === view.current && !overlay.current,
     prepare: (next: PlaybackSource) => {

@@ -1,0 +1,9 @@
+.phone-dynamics { display: grid; gap: 16px; }
+.phone-dynamics article { padding: 16px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); }
+.phone-dynamics h3 { margin: 0 0 10px; }
+.phone-dynamics p { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.6; }
+.phone-dynamic-original { margin-top: 12px; padding: 12px; background: var(--border); border-radius: 12px; }
+.phone-dynamic-images { display: grid; gap: 8px; margin: 12px 0; }
+.phone-dynamic-images .phone-cover { aspect-ratio: auto; min-height: 60px; }
+.phone-dynamic-images img { height: auto; object-fit: contain; }
+.phone-dynamics .phone-media-grid { grid-template-columns: 1fr; }
